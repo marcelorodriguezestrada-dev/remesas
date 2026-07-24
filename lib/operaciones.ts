@@ -11,12 +11,13 @@ import {
   serverTimestamp,
   Timestamp,
 } from "firebase/firestore";
+import type { Moneda } from "@/lib/pricing";
 
 const COLECCION = "operaciones";
 
 export type EstadoOperacion =
   | "pending"
-  | "usd_recibido"
+  | "origen_recibido"
   | "pagado"
   | "cancelado";
 
@@ -25,9 +26,10 @@ export interface NuevaOperacion {
   cliente_contacto?: string;
   destinatario_nombre: string;
   destinatario_cuenta?: string;
-  monto_usd: number;
-  monto_ars: number;
-  venta_blue_referencia: number;
+  moneda_origen: Moneda;
+  moneda_destino: Moneda;
+  monto_origen: number;
+  monto_destino: number;
   tipo_cambio_cliente: number;
   margen_pct: number;
   notas?: string;
@@ -69,7 +71,7 @@ export async function actualizarEstado(
 export async function listarOperacionesPendientes(): Promise<Operacion[]> {
   const q = query(
     collection(db, COLECCION),
-    where("estado", "in", ["pending", "usd_recibido"]),
+    where("estado", "in", ["pending", "origen_recibido"]),
     orderBy("created_at", "desc")
   );
 
@@ -84,9 +86,10 @@ export async function listarOperacionesPendientes(): Promise<Operacion[]> {
       cliente_contacto: data.cliente_contacto,
       destinatario_nombre: data.destinatario_nombre,
       destinatario_cuenta: data.destinatario_cuenta,
-      monto_usd: data.monto_usd,
-      monto_ars: data.monto_ars,
-      venta_blue_referencia: data.venta_blue_referencia,
+      moneda_origen: data.moneda_origen,
+      moneda_destino: data.moneda_destino,
+      monto_origen: data.monto_origen,
+      monto_destino: data.monto_destino,
       tipo_cambio_cliente: data.tipo_cambio_cliente,
       margen_pct: data.margen_pct,
       notas: data.notas,

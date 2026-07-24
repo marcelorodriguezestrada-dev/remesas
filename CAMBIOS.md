@@ -65,6 +65,26 @@ operaciones (mismo problema que ya señalamos en `firestore.rules`). Sirve
 para que vos lo uses mientras probás; antes de que esto sea un negocio real
 con plata de terceros, esto necesita autenticación de verdad.
 
+## Multi-moneda: ARS ⇄ USD ⇄ BOB
+
+El cotizador ya no es fijo USD→ARS. Ahora el cliente elige "Deposita en" y
+"Recibe en" entre USD, ARS y BOB, en cualquier combinación (incluyendo
+ARS↔BOB directo). El cálculo pivotea siempre por USD: se convierte el
+monto de origen a un "equivalente en dólares" usando el blue (ARS) o el
+paralelo vía USDT (BOB, fuente: CriptoYa), y de ahí a la moneda destino.
+El margen se aplica una sola vez sobre el cruce final, no dos veces.
+
+Cambios de nombres a tener en cuenta si tocás el código:
+- `lib/criptoya.ts` — nueva fuente para el paralelo de Bolivia
+- `lib/pricing.ts` — ahora trabaja con `Moneda = "USD" | "ARS" | "BOB"` en
+  vez de campos fijos `ventaBlue`/`usdAArs`
+- En Firestore, los campos de cada operación pasaron de
+  `monto_usd`/`monto_ars`/`venta_blue_referencia` a
+  `monto_origen`/`monto_destino`/`moneda_origen`/`moneda_destino` — las
+  operaciones viejas que ya hayas cargado con el esquema anterior van a
+  quedar con el formato viejo, no se migran automáticamente
+- El estado `usd_recibido` pasó a llamarse `origen_recibido` (más genérico)
+
 ## Lo que falta (a propósito)
 
 - **Seguridad real**: las reglas de Firestore hoy son `allow read, write: if

@@ -28,9 +28,10 @@ export async function POST(request: Request) {
   const camposRequeridos: (keyof NuevaOperacion)[] = [
     "cliente_nombre",
     "destinatario_nombre",
-    "monto_usd",
-    "monto_ars",
-    "venta_blue_referencia",
+    "moneda_origen",
+    "moneda_destino",
+    "monto_origen",
+    "monto_destino",
     "tipo_cambio_cliente",
     "margen_pct",
   ];

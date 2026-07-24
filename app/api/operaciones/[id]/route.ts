@@ -3,7 +3,7 @@ import { actualizarEstado, type EstadoOperacion } from "@/lib/operaciones";
 
 const ESTADOS_VALIDOS: EstadoOperacion[] = [
   "pending",
-  "usd_recibido",
+  "origen_recibido",
   "pagado",
   "cancelado",
 ];

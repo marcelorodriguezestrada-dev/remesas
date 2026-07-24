@@ -3,44 +3,33 @@
 import { useEffect, useState } from "react";
 import type { Operacion, EstadoOperacion } from "@/lib/operaciones";
 
-function formatearARS(valor: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
+function formatearMonto(valor: number, moneda: string): string {
+  const numero = new Intl.NumberFormat("es-AR", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(valor);
-}
-
-function formatearUSD(valor: number): string {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "USD",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(valor);
+  return `${numero} ${moneda}`;
 }
 
 const ETIQUETA_ESTADO: Record<EstadoOperacion, string> = {
   pending: "Esperando depósito",
-  usd_recibido: "USD recibido",
+  origen_recibido: "Depósito recibido",
   pagado: "Pagado",
   cancelado: "Cancelado",
 };
 
 const COLOR_ESTADO: Record<EstadoOperacion, string> = {
   pending: "bg-amber-50 text-amber-700",
-  usd_recibido: "bg-blue-50 text-blue-700",
+  origen_recibido: "bg-blue-50 text-blue-700",
   pagado: "bg-green-50 text-green-700",
   cancelado: "bg-zinc-100 text-zinc-500",
 };
 
-// Próximo estado sugerido según el estado actual, y qué acción representa.
 const SIGUIENTE_ESTADO: Partial<
   Record<EstadoOperacion, { estado: EstadoOperacion; etiqueta: string }>
 > = {
-  pending: { estado: "usd_recibido", etiqueta: "Marcar USD recibido" },
-  usd_recibido: { estado: "pagado", etiqueta: "Marcar pagado" },
+  pending: { estado: "origen_recibido", etiqueta: "Marcar depósito recibido" },
+  origen_recibido: { estado: "pagado", etiqueta: "Marcar pagado" },
 };
 
 export default function OperacionesPendientes() {
@@ -58,9 +47,7 @@ export default function OperacionesPendientes() {
       if (!res.ok) throw new Error(data.error ?? "Error desconocido");
       setOperaciones(data as Operacion[]);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "No se pudieron cargar"
-      );
+      setError(err instanceof Error ? err.message : "No se pudieron cargar");
     } finally {
       setCargando(false);
     }
@@ -81,8 +68,6 @@ export default function OperacionesPendientes() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Error desconocido");
 
-      // Si pasó a "pagado" o "cancelado" ya no es una operación pendiente,
-      // la sacamos de la lista en vez de esperar un refetch completo.
       if (estado === "pagado" || estado === "cancelado") {
         setOperaciones((prev) => prev.filter((op) => op.id !== id));
       } else {
@@ -156,21 +141,18 @@ export default function OperacionesPendientes() {
 
               <div className="mb-4 flex justify-between text-sm text-zinc-600">
                 <span>
-                  Deposita {formatearUSD(op.monto_usd)} → paga{" "}
-                  {formatearARS(op.monto_ars)}
+                  Deposita {formatearMonto(op.monto_origen, op.moneda_origen)}{" "}
+                  → paga{" "}
+                  {formatearMonto(op.monto_destino, op.moneda_destino)}
                 </span>
-                <span>
-                  {new Date(op.created_at).toLocaleString("es-AR")}
-                </span>
+                <span>{new Date(op.created_at).toLocaleString("es-AR")}</span>
               </div>
 
               <div className="flex gap-2">
                 {siguiente && (
                   <button
                     type="button"
-                    onClick={() =>
-                      void cambiarEstado(op.id, siguiente.estado)
-                    }
+                    onClick={() => void cambiarEstado(op.id, siguiente.estado)}
                     disabled={actualizandoId === op.id}
                     className="flex-1 rounded-xl bg-green-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:bg-zinc-300"
                   >
