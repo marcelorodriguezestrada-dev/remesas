@@ -38,19 +38,22 @@ export async function GET(request: Request) {
     );
   }
 
+  // Solo pedimos cada fuente si el par consultado realmente la necesita,
+  // así un problema con CriptoYa (BOB) no tira abajo también USD<->ARS.
+  const necesitaArs = desde === "ARS" || hacia === "ARS";
+  const necesitaBob = desde === "BOB" || hacia === "BOB";
+
   try {
-    // Pedimos las dos fuentes en paralelo, aunque el par consultado solo
-    // necesite una — simplifica el código y ambas responden rápido.
     const [blue, usdtBob] = await Promise.all([
-      getCotizacionBlue(),
-      getCotizacionUsdtBob(),
+      necesitaArs ? getCotizacionBlue() : Promise.resolve(null),
+      necesitaBob ? getCotizacionUsdtBob() : Promise.resolve(null),
     ]);
 
     const tasas: TasasMercado = {
-      ARS: blue.venta,
-      BOB: usdtBob.ask,
-      fechaArs: blue.fechaActualizacion,
-      fechaBob: usdtBob.time,
+      ARS: blue?.venta ?? 0,
+      BOB: usdtBob?.ask ?? 0,
+      fechaArs: blue?.fechaActualizacion ?? "",
+      fechaBob: usdtBob?.time ?? 0,
     };
 
     const tipoCambioCliente = calcularTipoCambioCliente(
@@ -71,8 +74,9 @@ export async function GET(request: Request) {
     return NextResponse.json(cotizacion);
   } catch (err) {
     console.error("Error obteniendo cotización:", err);
+    const mensaje = err instanceof Error ? err.message : "Error desconocido";
     return NextResponse.json(
-      { error: "No se pudo obtener alguna de las cotizaciones. Probá de nuevo." },
+      { error: `No se pudo obtener la cotización: ${mensaje}` },
       { status: 502 }
     );
   }
