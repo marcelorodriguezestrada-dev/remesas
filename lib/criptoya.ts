@@ -13,16 +13,39 @@ const CRIPTOYA_USDT_BOB_URL = "https://criptoya.com/api/USDT/BOB/1";
 
 export async function getCotizacionUsdtBob(): Promise<CotizacionUsdtBob> {
   const res = await fetch(CRIPTOYA_USDT_BOB_URL, {
+    headers: {
+      // Algunos proveedores bloquean o responden distinto a pedidos sin
+      // User-Agent (los tratan como bots). Nos identificamos como lo que
+      // somos: un fetch de servidor, no un navegador.
+      "User-Agent": "remesas-app/1.0 (+https://criptoya.com/api docs)",
+      Accept: "application/json",
+    },
     next: { revalidate: 300 }, // 5 minutos, mismo criterio que el blue
   });
 
+  const textoRespuesta = await res.text();
+
   if (!res.ok) {
+    console.error(
+      `CriptoYa respondió ${res.status} para USDT/BOB. Cuerpo: ${textoRespuesta.slice(0, 500)}`
+    );
     throw new Error(`CriptoYa respondió ${res.status} al consultar USDT/BOB`);
   }
 
-  const data = (await res.json()) as CotizacionUsdtBob;
+  let data: CotizacionUsdtBob;
+  try {
+    data = JSON.parse(textoRespuesta) as CotizacionUsdtBob;
+  } catch {
+    console.error(
+      `CriptoYa devolvió una respuesta no-JSON para USDT/BOB: ${textoRespuesta.slice(0, 500)}`
+    );
+    throw new Error("CriptoYa devolvió una respuesta inesperada para BOB");
+  }
 
   if (!data.ask || data.ask <= 0) {
+    console.error(
+      `CriptoYa devolvió ask inválido para USDT/BOB. Respuesta completa: ${JSON.stringify(data)}`
+    );
     throw new Error("CriptoYa devolvió una cotización inválida para BOB");
   }
 
