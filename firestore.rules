@@ -1,0 +1,13 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Para esta etapa de prueba: cualquiera con la app puede leer/escribir.
+    // Esto es equivalente a no tener autenticación — está bien para probar
+    // vos solo, pero ANTES de compartir el link con clientes reales hay que
+    // agregar Firebase Auth y restringir esto a usuarios autenticados
+    // (idealmente solo vos como admin).
+    match /operaciones/{operacionId} {
+      allow read, write: if true;
+    }
+  }
+}
