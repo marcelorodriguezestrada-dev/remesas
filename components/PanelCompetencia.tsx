@@ -40,9 +40,7 @@ export default function PanelCompetencia() {
 
   // Cache de nuestra propia cotización por par, para no repetir el fetch
   // en cada fila de la tabla.
-  const [propiaCotizacion, setPropiaCotizacion] = useState
-    Record<string, Cotizacion | null>
-  >({});
+   const [propiaCotizacion, setPropiaCotizacion] = useState<Record<string, Cotizacion | null>>({});
 
   async function cargarObservaciones() {
     setCargando(true);
