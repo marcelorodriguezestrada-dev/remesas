@@ -44,8 +44,12 @@ export interface Operacion extends NuevaOperacion {
 export async function crearOperacion(
   datos: NuevaOperacion
 ): Promise<Operacion> {
+  const datosLimpios = Object.fromEntries(
+    Object.entries(datos).filter(([, valor]) => valor !== undefined)
+  );
+
   const ref = await addDoc(collection(db, COLECCION), {
-    ...datos,
+    ...datosLimpios,
     estado: "pending" as EstadoOperacion,
     created_at: serverTimestamp(),
   });
