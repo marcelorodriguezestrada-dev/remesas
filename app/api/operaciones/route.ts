@@ -1,20 +1,5 @@
 import { NextResponse } from "next/server";
-import {
-  crearOperacion,
-  listarOperacionesPendientes,
-  type NuevaOperacion,
-} from "@/lib/operaciones";
-
-export async function GET() {
-  try {
-    const operaciones = await listarOperacionesPendientes();
-    return NextResponse.json(operaciones);
-  } catch (err) {
-    console.error("Error listando operaciones:", err);
-    const mensaje = err instanceof Error ? err.message : "Error desconocido";
-    return NextResponse.json({ error: mensaje }, { status: 500 });
-  }
-}
+import { crearOperacion, type NuevaOperacion } from "@/lib/operaciones";
 
 export async function POST(request: Request) {
   let body: NuevaOperacion;

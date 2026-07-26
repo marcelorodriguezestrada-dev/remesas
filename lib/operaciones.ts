@@ -68,10 +68,12 @@ export async function actualizarEstado(
   await updateDoc(doc(db, COLECCION, id), { estado });
 }
 
-export async function listarOperacionesPendientes(): Promise<Operacion[]> {
+export async function listarOperacionesPorEstado(
+  estados: EstadoOperacion[]
+): Promise<Operacion[]> {
   const q = query(
     collection(db, COLECCION),
-    where("estado", "in", ["pending", "origen_recibido"]),
+    where("estado", "in", estados),
     orderBy("created_at", "desc")
   );
 
@@ -99,4 +101,12 @@ export async function listarOperacionesPendientes(): Promise<Operacion[]> {
         : new Date().toISOString(),
     } satisfies Operacion;
   });
+}
+
+export async function listarOperacionesPendientes(): Promise<Operacion[]> {
+  return listarOperacionesPorEstado(["pending", "origen_recibido"]);
+}
+
+export async function listarOperacionesPagadas(): Promise<Operacion[]> {
+  return listarOperacionesPorEstado(["pagado"]);
 }

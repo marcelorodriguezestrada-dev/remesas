@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { Operacion, EstadoOperacion } from "@/lib/operaciones";
+import Link from "next/link";
+import {
+  listarOperacionesPendientes,
+  listarOperacionesPagadas,
+  actualizarEstado,
+  type Operacion,
+  type EstadoOperacion,
+} from "@/lib/operaciones";
+import { resumenGanancias, type ResumenGanancias } from "@/lib/ganancias";
 
 function formatearMonto(valor: number, moneda: string): string {
   const numero = new Intl.NumberFormat("es-AR", {
@@ -34,6 +42,7 @@ const SIGUIENTE_ESTADO: Partial<
 
 export default function OperacionesPendientes() {
   const [operaciones, setOperaciones] = useState<Operacion[]>([]);
+  const [ganancias, setGanancias] = useState<ResumenGanancias | null>(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
@@ -42,10 +51,12 @@ export default function OperacionesPendientes() {
     setCargando(true);
     setError(null);
     try {
-      const res = await fetch("/api/operaciones", { cache: "no-store" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Error desconocido");
-      setOperaciones(data as Operacion[]);
+      const [pendientes, pagadas] = await Promise.all([
+        listarOperacionesPendientes(),
+        listarOperacionesPagadas(),
+      ]);
+      setOperaciones(pendientes);
+      setGanancias(resumenGanancias(pagadas));
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudieron cargar");
     } finally {
@@ -60,21 +71,11 @@ export default function OperacionesPendientes() {
   async function cambiarEstado(id: string, estado: EstadoOperacion) {
     setActualizandoId(id);
     try {
-      const res = await fetch(`/api/operaciones/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ estado }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Error desconocido");
-
-      if (estado === "pagado" || estado === "cancelado") {
-        setOperaciones((prev) => prev.filter((op) => op.id !== id));
-      } else {
-        setOperaciones((prev) =>
-          prev.map((op) => (op.id === id ? { ...op, estado } : op))
-        );
-      }
+      await actualizarEstado(id, estado);
+      // Cambios de estado hacia pagado/cancelado también mueven la
+      // ganancia acumulada, así que recargamos todo en vez de solo
+      // parchear la lista local.
+      await cargar();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo actualizar");
     } finally {
@@ -83,19 +84,44 @@ export default function OperacionesPendientes() {
   }
 
   return (
-    <div className="w-full max-w-2xl">
-      <div className="mb-6 flex items-center justify-between">
+    <div className="w-full max-w-2xl px-4 pb-16 pt-6">
+      <div className="mb-4 flex items-center justify-between">
         <h2 className="text-xl font-semibold text-zinc-900">
           Operaciones pendientes
         </h2>
-        <button
-          type="button"
-          onClick={() => void cargar()}
-          className="text-sm font-medium text-green-600 hover:text-green-700"
-        >
-          Actualizar
-        </button>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/admin/competencia"
+            className="text-sm font-medium text-zinc-500 hover:text-zinc-700"
+          >
+            Competencia
+          </Link>
+          <button
+            type="button"
+            onClick={() => void cargar()}
+            className="text-sm font-medium text-green-600 hover:text-green-700"
+          >
+            Actualizar
+          </button>
+        </div>
       </div>
+
+      {/* Resumen de ganancia real, sobre operaciones ya pagadas */}
+      {ganancias && ganancias.cantidadOperaciones > 0 && (
+        <div className="mb-6 rounded-2xl bg-zinc-900 p-5 text-white">
+          <p className="mb-2 text-xs text-zinc-400">
+            Ganancia acumulada · {ganancias.cantidadOperaciones} operaciones
+            pagadas
+          </p>
+          <div className="flex flex-wrap gap-4">
+            {Object.entries(ganancias.porMoneda).map(([moneda, monto]) => (
+              <p key={moneda} className="text-2xl font-bold">
+                {formatearMonto(monto as number, moneda)}
+              </p>
+            ))}
+          </div>
+        </div>
+      )}
 
       {cargando && (
         <p className="text-sm text-zinc-500">Cargando operaciones…</p>

@@ -85,6 +85,42 @@ Cambios de nombres a tener en cuenta si tocás el código:
   quedar con el formato viejo, no se migran automáticamente
 - El estado `usd_recibido` pasó a llamarse `origen_recibido` (más genérico)
 
+## Login de admin + competencia + ganancias
+
+`/admin` ahora requiere estar logueado. Pasos para habilitarlo:
+
+1. **Firebase Console → Authentication → Sign-in method** → activá el
+   proveedor **"Email/Password"**.
+2. **Authentication → Users → Add user** → creá tu usuario admin (tu email
+   y una contraseña). Este es el único login que va a existir — no hay
+   registro público, el usuario se crea a mano en la consola.
+3. **Firestore Database → Reglas** → reemplazá el contenido por el de
+   `firestore.rules` (cambió: ahora separa permisos de creación pública
+   vs. lectura/edición solo autenticada) → Publicar.
+4. Entrá a `/login` con ese email y contraseña, te redirige a `/admin`.
+
+**Cambio de arquitectura importante:** el panel de `/admin` ahora habla
+directo con Firestore desde el navegador (usando la sesión del usuario
+logueado), en vez de pasar por `/api/operaciones`. Es necesario para que
+las reglas de seguridad por autenticación funcionen — un endpoint de
+Next.js corriendo en el servidor no tiene forma de "heredar" tu sesión de
+Firebase Auth del navegador. El único endpoint público que sigue
+existiendo es el `POST /api/operaciones` que usa el cotizador para crear
+solicitudes (eso sí necesita ser público, lo usa cualquier cliente sin
+loguearse).
+
+**Competencia** (`/admin/competencia`): cargás a mano el precio que viste
+ofrecer a un competidor (nombre, par de monedas, tasa), y el panel lo
+compara automáticamente contra tu tasa actual para ese par, mostrando el
+% de diferencia. No hay forma de traer esto automático — no existe una
+API pública de precios de casas de cambio informales, así que por ahora es
+carga manual cada vez que veas un precio en algún grupo o canal.
+
+**Ganancia real**: arriba de la lista de pendientes en `/admin` aparece un
+resumen de la ganancia acumulada de las operaciones ya marcadas como
+`pagado`, agrupada por moneda de destino. Se calcula a partir del margen
+guardado en cada operación, no hace falta ninguna tabla extra.
+
 ## Lo que falta (a propósito)
 
 - **Seguridad real**: las reglas de Firestore hoy son `allow read, write: if
