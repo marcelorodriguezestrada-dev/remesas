@@ -6,6 +6,7 @@ import {
   listarObservacionesRecientes,
   type ObservacionCompetencia,
 } from "@/lib/competencia";
+import { extraerCompraVenta } from "@/lib/parse-cotizacion-texto";
 import type { Moneda, Cotizacion } from "@/lib/pricing";
 
 const MONEDAS: Moneda[] = ["USD", "ARS", "BOB"];
@@ -24,9 +25,22 @@ export default function PanelCompetencia() {
   const [notas, setNotas] = useState("");
   const [guardando, setGuardando] = useState(false);
 
+  // Pegado rápido: el usuario pega un mensaje de WhatsApp/Telegram y
+  // extraemos el número, sin tipear nada a mano.
+  const [textoPegado, setTextoPegado] = useState("");
+
+  // Lectura automática de un canal público de Telegram.
+  const [canalTelegram, setCanalTelegram] = useState("");
+  const [buscandoCanal, setBuscandoCanal] = useState(false);
+  const [resultadoCanal, setResultadoCanal] = useState<{
+    texto: string;
+    compra: number | null;
+    venta: number | null;
+  } | null>(null);
+
   // Cache de nuestra propia cotización por par, para no repetir el fetch
   // en cada fila de la tabla.
-  const [propiaCotizacion, setPropiaCotizacion] = useState<
+  const [propiaCotizacion, setPropiaCotizacion] = useState
     Record<string, Cotizacion | null>
   >({});
 
@@ -37,8 +51,6 @@ export default function PanelCompetencia() {
       const datos = await listarObservacionesRecientes();
       setObservaciones(datos);
 
-      // Traemos nuestra cotización actual para cada par distinto que
-      // aparece en las observaciones cargadas.
       const paresUnicos = new Set(
         datos.map((o) => `${o.moneda_origen}-${o.moneda_destino}`)
       );
@@ -69,6 +81,34 @@ export default function PanelCompetencia() {
     void cargarObservaciones();
   }, []);
 
+  function handlePegarTexto(texto: string) {
+    setTextoPegado(texto);
+    const { compra, venta } = extraerCompraVenta(texto);
+    if (venta !== null) setTasaObservada(String(venta));
+  }
+
+  async function handleBuscarCanal() {
+    if (!canalTelegram.trim()) return;
+    setBuscandoCanal(true);
+    setResultadoCanal(null);
+    setError(null);
+    try {
+      const res = await fetch(
+        `/api/competencia/leer-canal?canal=${encodeURIComponent(canalTelegram.trim())}`,
+        { cache: "no-store" }
+      );
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Error desconocido");
+      setResultadoCanal(data);
+      if (!competidor.trim()) setCompetidor(canalTelegram.trim());
+      if (data.venta !== null) setTasaObservada(String(data.venta));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "No se pudo leer el canal");
+    } finally {
+      setBuscandoCanal(false);
+    }
+  }
+
   async function handleGuardar() {
     const tasa = parseFloat(tasaObservada);
     if (!competidor.trim() || !tasa || monedaOrigen === monedaDestino) return;
@@ -85,6 +125,9 @@ export default function PanelCompetencia() {
       setCompetidor("");
       setTasaObservada("");
       setNotas("");
+      setTextoPegado("");
+      setResultadoCanal(null);
+      setCanalTelegram("");
       await cargarObservaciones();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo guardar");
@@ -99,10 +142,84 @@ export default function PanelCompetencia() {
         Precios de la competencia
       </h2>
 
-      {/* Formulario para cargar una observación nueva */}
+      {/* Lectura automática de un canal público de Telegram */}
+      <div className="mb-4 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-100">
+        <p className="mb-1 text-sm font-medium text-zinc-700">
+          Traer de un canal público de Telegram
+        </p>
+        <p className="mb-3 text-xs text-zinc-400">
+          Solo funciona con canales públicos (no grupos de WhatsApp). Poné
+          el @usuario del canal, ej: jhsafebolivia
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="@usuario del canal"
+            value={canalTelegram}
+            onChange={(e) => setCanalTelegram(e.target.value)}
+            className="flex-1 rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+          />
+          <button
+            type="button"
+            onClick={() => void handleBuscarCanal()}
+            disabled={buscandoCanal || !canalTelegram.trim()}
+            className="rounded-xl bg-zinc-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800 disabled:cursor-not-allowed disabled:bg-zinc-300"
+          >
+            {buscandoCanal ? "Buscando…" : "Buscar"}
+          </button>
+        </div>
+
+        {resultadoCanal && (
+          <div className="mt-3 rounded-lg bg-zinc-50 px-4 py-3">
+            <p className="text-xs text-zinc-400">Último mensaje del canal:</p>
+            <p className="mb-2 whitespace-pre-line text-sm text-zinc-700">
+              {resultadoCanal.texto}
+            </p>
+            {resultadoCanal.venta !== null ? (
+              <p className="text-sm font-medium text-green-600">
+                Detectado: compra {resultadoCanal.compra ?? "—"} / venta{" "}
+                {resultadoCanal.venta} — ya cargado abajo, revisá y guardá.
+              </p>
+            ) : (
+              <p className="text-sm text-amber-600">
+                No pude detectar un número en ese mensaje — puede que el
+                último post del canal no sea de cotización. Copiá la tasa a
+                mano abajo si hace falta.
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Pegado rápido de un mensaje (WhatsApp u otro) */}
+      <div className="mb-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-100">
+        <p className="mb-1 text-sm font-medium text-zinc-700">
+          Pegar mensaje de WhatsApp
+        </p>
+        <p className="mb-3 text-xs text-zinc-400">
+          Copiá y pegá el mensaje tal cual del grupo — extraemos el número
+          solo, no hace falta que lo busques a mano.
+        </p>
+        <textarea
+          placeholder='Ej: "Compra: 11.66 | Venta: 11.86"'
+          value={textoPegado}
+          onChange={(e) => handlePegarTexto(e.target.value)}
+          rows={3}
+          className="w-full rounded-xl border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20"
+        />
+        {textoPegado && (
+          <p className="mt-2 text-sm text-zinc-600">
+            {tasaObservada
+              ? `Detectado: ${tasaObservada} — ya cargado abajo, completá el nombre del competidor y guardá.`
+              : "No detecté ningún número en ese texto todavía."}
+          </p>
+        )}
+      </div>
+
+      {/* Formulario para cargar (o ajustar) la observación manualmente */}
       <div className="mb-8 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-100">
         <p className="mb-4 text-sm font-medium text-zinc-700">
-          Cargar precio observado
+          Cargar / revisar precio observado
         </p>
         <div className="grid grid-cols-2 gap-3">
           <input
