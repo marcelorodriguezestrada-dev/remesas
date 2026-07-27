@@ -17,6 +17,8 @@ import {
   listarObservacionesRecientes,
   type ObservacionCompetencia,
 } from "@/lib/competencia";
+import { calcularKpis } from "@/lib/kpis";
+import KpiCards from "@/components/KpiCards";
 
 function formatearHora(iso: string): string {
   return new Date(iso).toLocaleString("es-AR", {
@@ -77,6 +79,8 @@ export default function GraficoEvolucion() {
   // Solo nos sirven las observaciones del par ARS↔BOB, que es lo que
   // muestra este gráfico. Las convertimos a "por 1.000" para que queden
   // en la misma escala que nuestras propias líneas.
+  const kpis = calcularKpis(datos);
+
   const marcasCompetencia = observaciones
     .filter(
       (o) =>
@@ -107,10 +111,10 @@ export default function GraficoEvolucion() {
     );
   }
 
-  if (datos.length < 2) {
+  if (datos.length === 0) {
     return (
       <p className="rounded-xl bg-zinc-50 px-5 py-8 text-center text-sm text-zinc-500">
-        Todavía no hay suficiente histórico — se va guardando una foto por
+        Todavía no hay ningún dato guardado — se va guardando una foto por
         hora a partir de ahora, volvé en un rato.
       </p>
     );
@@ -118,6 +122,15 @@ export default function GraficoEvolucion() {
 
   return (
     <div className="space-y-8">
+      <KpiCards kpis={kpis} />
+
+      {datos.length < 2 ? (
+        <p className="rounded-xl bg-zinc-50 px-5 py-8 text-center text-sm text-zinc-500">
+          Todavía no hay suficiente histórico para el gráfico — se va
+          guardando una foto por hora a partir de ahora, volvé en un rato.
+        </p>
+      ) : (
+        <>
       <div>
         <p className="mb-2 text-sm font-medium text-zinc-700">
           Dólar de referencia — Argentina y Bolivia
@@ -206,6 +219,8 @@ export default function GraficoEvolucion() {
           competencia que cargaste — comparalos contra tu línea del mismo
           color en ese momento.
         </p>
+      )}
+        </>
       )}
     </div>
   );
