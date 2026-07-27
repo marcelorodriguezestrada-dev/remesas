@@ -40,7 +40,7 @@ export default function PanelCompetencia() {
 
   // Cache de nuestra propia cotización por par, para no repetir el fetch
   // en cada fila de la tabla.
-   const [propiaCotizacion, setPropiaCotizacion] = useState<Record<string, Cotizacion | null>>({});
+  const [propiaCotizacion, setPropiaCotizacion] = useState<Record<string, Cotizacion | null>>({});
 
   async function cargarObservaciones() {
     setCargando(true);
@@ -49,6 +49,8 @@ export default function PanelCompetencia() {
       const datos = await listarObservacionesRecientes();
       setObservaciones(datos);
 
+      // Traemos nuestra cotización actual para cada par distinto que
+      // aparece en las observaciones cargadas.
       const paresUnicos = new Set(
         datos.map((o) => `${o.moneda_origen}-${o.moneda_destino}`)
       );
@@ -82,6 +84,8 @@ export default function PanelCompetencia() {
   function handlePegarTexto(texto: string) {
     setTextoPegado(texto);
     const { compra, venta } = extraerCompraVenta(texto);
+    // Usamos venta como la tasa de referencia (es la que el competidor
+    // "vende" al cliente, comparable con nuestro tipoCambioCliente).
     if (venta !== null) setTasaObservada(String(venta));
   }
 

@@ -29,8 +29,15 @@ export interface ObservacionCompetencia extends NuevaObservacionCompetencia {
 export async function registrarObservacion(
   datos: NuevaObservacionCompetencia
 ): Promise<void> {
+  // Firestore rechaza el documento entero si algún campo llega en
+  // `undefined` (a diferencia de otras bases, que simplemente lo
+  // ignorarían) — filtramos esos campos antes de escribir.
+  const datosLimpios = Object.fromEntries(
+    Object.entries(datos).filter(([, valor]) => valor !== undefined)
+  );
+
   await addDoc(collection(db, COLECCION), {
-    ...datos,
+    ...datosLimpios,
     created_at: serverTimestamp(),
   });
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getCotizacionBlue } from "@/lib/dolarapi";
 import { getCotizacionUsdtBob } from "@/lib/criptoya";
 import { calcularTipoCambioCliente, MARGEN_DEFAULT, type TasasMercado } from "@/lib/pricing";
+import { registrarSnapshot } from "@/lib/historial-tasas";
 
 // GET /api/tasas — todo el tablero de un solo pedido, para la pizarra pública.
 export async function GET() {
@@ -20,16 +21,27 @@ export async function GET() {
 
     const margenPct = MARGEN_DEFAULT;
 
+    const arsABob1000 = calcularTipoCambioCliente("ARS", "BOB", tasas, margenPct) * 1000;
+    const bobAArs1000 = calcularTipoCambioCliente("BOB", "ARS", tasas, margenPct) * 1000;
+
+    // Guardamos la foto de esta hora para el gráfico histórico. Si esto
+    // falla (ej. reglas de Firestore mal configuradas), no queremos que
+    // rompa la respuesta del tablero público — solo lo logueamos.
+    registrarSnapshot({
+      usdArs: blue.venta,
+      usdBob: usdtBob.ask,
+      margenPct,
+      arsABob1000,
+      bobAArs1000,
+    }).catch((err) => console.error("No se pudo guardar el snapshot:", err));
+
     return NextResponse.json({
       actualizado: new Date().toISOString(),
       margenPct,
       usdArs: { compra: blue.compra, venta: blue.venta },
       usdBob: { compra: usdtBob.bid, venta: usdtBob.ask },
-      // Cuántas unidades de la moneda destino entrega el operador por
-      // cada 1.000 unidades de la moneda de origen, ya con el margen
-      // aplicado (es el precio real que se le ofrece al cliente).
-      arsABob1000: calcularTipoCambioCliente("ARS", "BOB", tasas, margenPct) * 1000,
-      bobAArs1000: calcularTipoCambioCliente("BOB", "ARS", tasas, margenPct) * 1000,
+      arsABob1000,
+      bobAArs1000,
     });
   } catch (err) {
     console.error("Error armando el tablero de tasas:", err);

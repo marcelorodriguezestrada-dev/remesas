@@ -91,6 +91,12 @@ export default function OperacionesPendientes() {
         </h2>
         <div className="flex items-center gap-4">
           <Link
+            href="/admin/dashboard"
+            className="text-sm font-medium text-zinc-500 hover:text-zinc-700"
+          >
+            Dashboard
+          </Link>
+          <Link
             href="/admin/competencia"
             className="text-sm font-medium text-zinc-500 hover:text-zinc-700"
           >

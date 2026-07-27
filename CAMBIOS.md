@@ -121,6 +121,51 @@ resumen de la ganancia acumulada de las operaciones ya marcadas como
 `pagado`, agrupada por moneda de destino. Se calcula a partir del margen
 guardado en cada operación, no hace falta ninguna tabla extra.
 
+## Traer precios de competencia automáticamente (con límites)
+
+En `/admin/competencia` sumé dos atajos:
+
+- **Canales públicos de Telegram**: poniendo el `@usuario` del canal, lee
+  el último mensaje público (vía `t.me/s/{canal}`, la misma vista sin
+  login que se ve en el navegador) e intenta extraer un precio tipo
+  "Compra: X | Venta: Y". Solo funciona con canales **públicos** — no hay
+  forma de leer grupos privados sin ser miembro.
+- **Pegado rápido de WhatsApp**: NO hay forma de conectarse automáticamente
+  a un grupo de WhatsApp — no existe una API pública para eso, y las
+  formas no oficiales (loguearse como si fuera tu WhatsApp Web desde un
+  bot) violan los términos de uso de WhatsApp y pueden terminar en que te
+  bloqueen el número. En cambio, dejé un campo para pegar el texto del
+  mensaje tal cual lo copiaste del grupo, y el mismo parser que usa
+  Telegram le saca el número — no hay que tipearlo a mano, pero sí hay que
+  copiarlo y pegarlo vos.
+
+En ambos casos el dato **no se guarda solo**: se precarga en el formulario
+para que lo revises (o corrijas) antes de guardar. Es a propósito — un
+scraper mal interpretado guardando datos falsos sin que nadie los mire es
+peor que no tener el dato.
+
+## Dashboard admin: noticias + histórico + gráfico
+
+Nueva sección en `/admin/dashboard` (link en la barra de arriba del panel):
+
+- **Noticias**: titulares recientes sobre el dólar en Argentina y Bolivia,
+  vía RSS de búsqueda de Google News (`news.google.com/rss/search`), filtrado
+  por país con los parámetros `hl`/`gl`/`ceid`. No es una fuente única —
+  agrega de muchos medios reales, así que no depende de que un diario en
+  particular no cambie su URL de RSS. Los links abren en el medio original.
+- **Histórico propio**: desde ahora, cada vez que alguien consulta
+  `/api/tasas` (lo pega el tablero público de `/tipo-cambio`), se guarda
+  una foto de esa hora en Firestore (`historial_tasas`, un documento por
+  hora, se pisa si hay varias consultas en la misma hora). No hay
+  histórico de antes de hoy — no existe una fuente gratuita de eso — pero
+  a partir de ahora se va acumulando solo.
+- **Gráfico**: dos gráficos de líneas (con `recharts`, ya lo agregué a
+  `package.json` — necesita `npm install` para bajar la dependencia). El
+  primero compara el blue argentino contra el paralelo boliviano; el
+  segundo muestra la evolución de tu propio tipo de cambio ofrecido
+  ARS→BOB y BOB→ARS. Va a aparecer vacío/con el mensaje "todavía no hay
+  histórico" hasta que pasen un par de horas y se acumulen algunas fotos.
+
 ## Lo que falta (a propósito)
 
 - **Seguridad real**: las reglas de Firestore hoy son `allow read, write: if
