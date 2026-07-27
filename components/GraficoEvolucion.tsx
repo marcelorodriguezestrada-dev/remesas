@@ -10,8 +10,13 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
+  ReferenceDot,
 } from "recharts";
 import { listarHistorial, type SnapshotTasa } from "@/lib/historial-tasas";
+import {
+  listarObservacionesRecientes,
+  type ObservacionCompetencia,
+} from "@/lib/competencia";
 
 function formatearHora(iso: string): string {
   return new Date(iso).toLocaleString("es-AR", {
@@ -21,14 +26,36 @@ function formatearHora(iso: string): string {
   });
 }
 
+/** Busca, para una fecha dada, el snapshot más cercano en el tiempo — así
+ * podemos ubicar la observación de competencia en el eje X categórico
+ * del gráfico (que usa las mismas horas que el histórico propio). */
+function snapshotMasCercano(
+  fecha: string,
+  historial: SnapshotTasa[]
+): SnapshotTasa | null {
+  if (historial.length === 0) return null;
+  const objetivo = new Date(fecha).getTime();
+  return historial.reduce((mejor, actual) => {
+    const dMejor = Math.abs(new Date(mejor.fechaHora).getTime() - objetivo);
+    const dActual = Math.abs(new Date(actual.fechaHora).getTime() - objetivo);
+    return dActual < dMejor ? actual : mejor;
+  }, historial[0]);
+}
+
 export default function GraficoEvolucion() {
   const [datos, setDatos] = useState<SnapshotTasa[]>([]);
+  const [observaciones, setObservaciones] = useState<ObservacionCompetencia[]>(
+    []
+  );
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    listarHistorial()
-      .then(setDatos)
+    Promise.all([listarHistorial(), listarObservacionesRecientes(50)])
+      .then(([historial, obs]) => {
+        setDatos(historial);
+        setObservaciones(obs);
+      })
       .catch((err) =>
         setError(err instanceof Error ? err.message : "No se pudo cargar")
       )
@@ -46,6 +73,27 @@ export default function GraficoEvolucion() {
     "Tu tasa ARS→BOB (x1000)": d.arsABob1000,
     "Tu tasa BOB→ARS (x1000)": d.bobAArs1000,
   }));
+
+  // Solo nos sirven las observaciones del par ARS↔BOB, que es lo que
+  // muestra este gráfico. Las convertimos a "por 1.000" para que queden
+  // en la misma escala que nuestras propias líneas.
+  const marcasCompetencia = observaciones
+    .filter(
+      (o) =>
+        (o.moneda_origen === "ARS" && o.moneda_destino === "BOB") ||
+        (o.moneda_origen === "BOB" && o.moneda_destino === "ARS")
+    )
+    .map((o) => {
+      const cercano = snapshotMasCercano(o.created_at, datos);
+      if (!cercano) return null;
+      return {
+        hora: formatearHora(cercano.fechaHora),
+        valor: o.tasa_observada * 1000,
+        esArsABob: o.moneda_origen === "ARS",
+        competidor: o.competidor,
+      };
+    })
+    .filter((m): m is NonNullable<typeof m> => m !== null);
 
   if (cargando) {
     return <p className="text-sm text-zinc-500">Cargando histórico…</p>;
@@ -131,9 +179,34 @@ export default function GraficoEvolucion() {
               dot={false}
               strokeWidth={2}
             />
+            {marcasCompetencia.map((m, i) => (
+              <ReferenceDot
+                key={i}
+                x={m.hora}
+                y={m.valor}
+                r={5}
+                fill={m.esArsABob ? "#16a34a" : "#2563eb"}
+                stroke="#fff"
+                strokeWidth={1.5}
+                label={{
+                  value: m.competidor,
+                  position: "top",
+                  fontSize: 10,
+                  fill: "#71717a",
+                }}
+              />
+            ))}
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      {marcasCompetencia.length > 0 && (
+        <p className="text-xs text-zinc-400">
+          Los puntos marcados en el gráfico de arriba son precios de
+          competencia que cargaste — comparalos contra tu línea del mismo
+          color en ese momento.
+        </p>
+      )}
     </div>
   );
 }
