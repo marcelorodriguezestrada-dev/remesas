@@ -13,6 +13,8 @@ interface Tablero {
 
 const GRUPO_WHATSAPP =
   process.env.NEXT_PUBLIC_GRUPO_WHATSAPP ?? "(falta configurar el link del grupo)";
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL ?? "(falta configurar NEXT_PUBLIC_SITE_URL)";
 
 function TarjetaPlantilla({ plantilla }: { plantilla: PlantillaMarketing }) {
   const [copiado, setCopiado] = useState(false);
@@ -73,6 +75,7 @@ export default function PanelMarketing() {
     arsABob1000: tablero.arsABob1000,
     bobAArs1000: tablero.bobAArs1000,
     grupoWhatsapp: GRUPO_WHATSAPP,
+    siteUrl: SITE_URL,
   });
 
   return (

@@ -160,13 +160,13 @@ export default function CotizadorMultiMoneda() {
 
   if (operacionConfirmada) {
     const mensajeWhatsapp = encodeURIComponent(
-      `Hola! Ya deposité ${formatearMonto(
+      `Hola! Quiero enviar ${formatearMonto(
         operacionConfirmada.montoOrigen,
         operacionConfirmada.monedaOrigen
       )} para que le transfieras ${formatearMonto(
         operacionConfirmada.montoDestino,
         operacionConfirmada.monedaDestino
-      )} a ${operacionConfirmada.destinatarioNombre}.`
+      )} a ${operacionConfirmada.destinatarioNombre}. ¿Por qué medio puedo depositar y dónde querés que vea reflejado el depósito?`
     );
 
     return (
@@ -175,36 +175,51 @@ export default function CotizadorMultiMoneda() {
           Un último paso
         </h2>
 
-        <div className="mb-5 rounded-xl bg-green-50 px-5 py-4 space-y-2">
-          <div className="flex items-baseline justify-between">
-            <span className="text-sm text-green-700">Depositá</span>
-            <span className="text-3xl font-bold text-green-600">
-              {formatearMonto(
-                operacionConfirmada.montoOrigen,
-                operacionConfirmada.monedaOrigen
-              )}
-            </span>
+        {operacionConfirmada.monedaOrigen === "USD" ? (
+          <div className="mb-5 rounded-xl bg-green-50 px-5 py-4 space-y-2">
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm text-green-700">
+                Podés depositar
+              </span>
+              <span className="text-3xl font-bold text-green-600">
+                {formatearMonto(
+                  operacionConfirmada.montoOrigen,
+                  operacionConfirmada.monedaOrigen
+                )}
+              </span>
+            </div>
+            <p className="text-sm text-green-700/80">
+              por Takenos (opcional), a este alias:
+            </p>
+            <p className="rounded-lg bg-white px-4 py-3 text-center text-lg font-semibold text-zinc-900 ring-1 ring-green-200">
+              {takenosAlias ?? "(falta configurar el alias de depósito)"}
+            </p>
+            <p className="text-xs text-green-700/70">
+              ¿Preferís otro medio para depositar? No hay problema, seguí
+              por WhatsApp abajo y lo coordinamos.
+            </p>
           </div>
-          <p className="text-sm text-green-700/80">
-            {operacionConfirmada.monedaOrigen === "USD"
-              ? "en Takenos, a este alias:"
-              : "según te indiquemos por WhatsApp, a este alias de referencia:"}
-          </p>
-          <p className="rounded-lg bg-white px-4 py-3 text-center text-lg font-semibold text-zinc-900 ring-1 ring-green-200">
-            {takenosAlias ?? "(falta configurar el alias de depósito)"}
-          </p>
-        </div>
+        ) : (
+          <div className="mb-5 rounded-xl bg-zinc-50 px-5 py-4">
+            <p className="text-sm text-zinc-600">
+              Para depositar en{" "}
+              <strong>{operacionConfirmada.monedaOrigen}</strong>, coordinamos
+              el medio y la cuenta por WhatsApp — cada caso puede variar.
+            </p>
+          </div>
+        )}
 
         <p className="mb-5 text-sm text-zinc-600">
-          Apenas veamos el depósito, le transferimos{" "}
+          Apenas se confirme el depósito, le transferimos{" "}
           <strong>
             {formatearMonto(
               operacionConfirmada.montoDestino,
               operacionConfirmada.monedaDestino
             )}
           </strong>{" "}
-          a {operacionConfirmada.destinatarioNombre}. Para que sea más rápido,
-          avisanos por WhatsApp cuando ya hayas depositado.
+          a {operacionConfirmada.destinatarioNombre}. Escribinos para
+          confirmar por qué medio vas a depositar y dónde querés ver el
+          depósito reflejado.
         </p>
 
         {whatsappNumero ? (
@@ -214,7 +229,7 @@ export default function CotizadorMultiMoneda() {
             rel="noopener noreferrer"
             className="mb-3 block w-full rounded-xl bg-green-600 px-4 py-4 text-center text-lg font-semibold text-white transition hover:bg-green-700"
           >
-            Avisar por WhatsApp
+            Continuar por WhatsApp
           </a>
         ) : (
           <p className="mb-3 text-sm text-red-600">

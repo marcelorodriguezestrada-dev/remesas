@@ -23,5 +23,7 @@ services:
         sync: false
       - key: NEXT_PUBLIC_GRUPO_WHATSAPP
         sync: false
+      - key: NEXT_PUBLIC_SITE_URL
+        sync: false
       - key: MARGEN_PORCENTAJE_DEFAULT
         value: "0.025"

@@ -166,6 +166,28 @@ Nueva sección en `/admin/dashboard` (link en la barra de arriba del panel):
   ARS→BOB y BOB→ARS. Va a aparecer vacío/con el mensaje "todavía no hay
   histórico" hasta que pasen un par de horas y se acumulen algunas fotos.
 
+## Marketing: fecha/hora + link del sitio
+
+Los 4 textos de `/admin/marketing` ahora incluyen la fecha y hora de
+generación, y el link a tu sitio (`NEXT_PUBLIC_SITE_URL`, agregala a tu
+`.env.local` y a Render). Ojo: como son textos que se copian y pegan, la
+fecha/hora queda "congelada" en el momento que copiaste — si publicás el
+texto un rato después, va a decir la hora en que lo generaste, no la hora
+real de publicación. Es lo esperable dado que son textos estáticos.
+
+## Cotizador: Takenos pasa a ser sugerencia, no obligación
+
+Antes la pantalla de confirmación asumía que el depósito iba sí o sí por
+Takenos y que ya estaba hecho. Ahora:
+- Si el origen es USD, se muestra el alias de Takenos marcado como
+  **opcional**, con una aclaración de que si prefiere otro medio puede
+  seguir por WhatsApp.
+- Si el origen no es USD (ARS o BOB), directamente no se asume ningún
+  medio — se indica que se coordina por WhatsApp.
+- El mensaje de WhatsApp ya no da por hecho que el cliente depositó — ahora
+  pregunta por qué medio puede depositar y dónde quiere ver el depósito
+  reflejado, para que la conversación real defina eso, no la app.
+
 ## Lo que falta (a propósito)
 
 - **Seguridad real**: las reglas de Firestore hoy son `allow read, write: if

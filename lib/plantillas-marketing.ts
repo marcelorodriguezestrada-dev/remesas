@@ -2,6 +2,7 @@ interface DatosPlantilla {
   arsABob1000: number;
   bobAArs1000: number;
   grupoWhatsapp: string;
+  siteUrl: string;
 }
 
 function num(valor: number): string {
@@ -9,6 +10,13 @@ function num(valor: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(valor);
+}
+
+function fechaHoraActual(): string {
+  return new Date().toLocaleString("es-AR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
 }
 
 export interface PlantillaMarketing {
@@ -19,7 +27,8 @@ export interface PlantillaMarketing {
 }
 
 export function generarPlantillas(datos: DatosPlantilla): PlantillaMarketing[] {
-  const { arsABob1000, bobAArs1000, grupoWhatsapp } = datos;
+  const { arsABob1000, bobAArs1000, grupoWhatsapp, siteUrl } = datos;
+  const fechaHora = fechaHoraActual();
 
   return [
     {
@@ -27,9 +36,10 @@ export function generarPlantillas(datos: DatosPlantilla): PlantillaMarketing[] {
       etiqueta: "Estado de WhatsApp",
       descripcion: "Corto, para tu estado — la gente lo ve 24hs",
       texto:
-        `💱 Cambio pesos ⇄ bolivianos\n` +
+        `💱 Cambio pesos ⇄ bolivianos — ${fechaHora}\n` +
         `$1.000 ARS → ${num(arsABob1000)} Bs\n` +
         `1.000 Bs → $${num(bobAArs1000)} ARS\n` +
+        `Cotizá tu monto: ${siteUrl}\n` +
         `Consultas 👉 ${grupoWhatsapp}`,
     },
     {
@@ -37,12 +47,14 @@ export function generarPlantillas(datos: DatosPlantilla): PlantillaMarketing[] {
       etiqueta: "Mensaje para grupos de WhatsApp",
       descripcion: "Más completo, para reenviar en grupos de la comunidad",
       texto:
-        `💱 *Cambio de pesos argentinos y bolivianos*\n\n` +
+        `💱 *Cambio de pesos argentinos y bolivianos*\n` +
+        `🕐 Actualizado: ${fechaHora}\n\n` +
         `📈 Hoy:\n` +
         `• $1.000 ARS → ${num(arsABob1000)} Bs\n` +
         `• 1.000 Bs → $${num(bobAArs1000)} ARS\n\n` +
         `✅ Rápido y de confianza\n` +
-        `📲 Sumate al grupo para cotizar tu monto y consultar dudas:\n` +
+        `🌐 Cotizá tu monto exacto acá: ${siteUrl}\n` +
+        `📲 Sumate al grupo para consultar dudas:\n` +
         `${grupoWhatsapp}`,
     },
     {
@@ -51,10 +63,10 @@ export function generarPlantillas(datos: DatosPlantilla): PlantillaMarketing[] {
       descripcion:
         "Sin link clickeable en el texto — Instagram no lo permite en el caption, poné el link en la bio y escribí \"link en bio\"",
       texto:
-        `💱 Tipo de cambio de hoy\n` +
+        `💱 Tipo de cambio de hoy — ${fechaHora}\n` +
         `🇦🇷 $1.000 ARS = 🇧🇴 ${num(arsABob1000)} Bs\n` +
         `🇧🇴 1.000 Bs = 🇦🇷 $${num(bobAArs1000)} ARS\n\n` +
-        `¿Necesitás cambiar? Sumate al grupo (link en bio) 👆\n\n` +
+        `¿Necesitás cambiar? Cotizá tu monto y sumate al grupo (link en bio) 👆\n\n` +
         `#dolar #cambio #argentina #bolivia #remesas`,
     },
     {
@@ -62,9 +74,11 @@ export function generarPlantillas(datos: DatosPlantilla): PlantillaMarketing[] {
       etiqueta: "Genérico (Facebook / grupos varios)",
       descripcion: "Para publicar en cualquier otro lado",
       texto:
-        `Cambio pesos argentinos y bolivianos, tipo de cambio actualizado todos los días.\n\n` +
+        `Cambio pesos argentinos y bolivianos, tipo de cambio actualizado todos los días.\n` +
+        `Actualizado: ${fechaHora}\n\n` +
         `Hoy: $1.000 ARS = ${num(arsABob1000)} Bs | 1.000 Bs = $${num(bobAArs1000)} ARS\n\n` +
-        `Consultas y cotizaciones acá: ${grupoWhatsapp}`,
+        `Cotizá tu monto acá: ${siteUrl}\n` +
+        `Consultas: ${grupoWhatsapp}`,
     },
   ];
 }
