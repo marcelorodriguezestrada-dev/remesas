@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import type { Cotizacion, Moneda } from "@/lib/pricing";
+import { obtenerUtmDeSesion } from "@/components/TrackerVisita";
 
 const MONEDAS: { valor: Moneda; etiqueta: string; simbolo: string }[] = [
   { valor: "USD", etiqueta: "Dólares (USD)", simbolo: "US$" },
@@ -118,6 +119,7 @@ export default function CotizadorMultiMoneda() {
     setMensaje(null);
 
     try {
+      const utm = obtenerUtmDeSesion();
       const res = await fetch("/api/operaciones", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -131,6 +133,9 @@ export default function CotizadorMultiMoneda() {
           monto_destino: montoDestino,
           tipo_cambio_cliente: cotizacion.tipoCambioCliente,
           margen_pct: cotizacion.margenPct,
+          utm_source: utm.utm_source,
+          utm_medium: utm.utm_medium,
+          utm_campaign: utm.utm_campaign,
         }),
       });
 

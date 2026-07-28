@@ -33,6 +33,9 @@ export interface NuevaOperacion {
   tipo_cambio_cliente: number;
   margen_pct: number;
   notas?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
 }
 
 export interface Operacion extends NuevaOperacion {
@@ -99,12 +102,24 @@ export async function listarOperacionesPorEstado(
       tipo_cambio_cliente: data.tipo_cambio_cliente,
       margen_pct: data.margen_pct,
       notas: data.notas,
+      utm_source: data.utm_source,
+      utm_medium: data.utm_medium,
+      utm_campaign: data.utm_campaign,
       estado: data.estado,
       created_at: createdAt
         ? createdAt.toDate().toISOString()
         : new Date().toISOString(),
     } satisfies Operacion;
   });
+}
+
+export async function listarTodasLasOperaciones(): Promise<Operacion[]> {
+  return listarOperacionesPorEstado([
+    "pending",
+    "origen_recibido",
+    "pagado",
+    "cancelado",
+  ]);
 }
 
 export async function listarOperacionesPendientes(): Promise<Operacion[]> {

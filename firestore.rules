@@ -28,5 +28,12 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if true;
     }
+
+    match /visitas/{visitaId} {
+      // Las escribe cualquier visitante anónimo de la página pública
+      // (para trackear UTM); solo el admin logueado ve el listado.
+      allow read: if request.auth != null;
+      allow write: if true;
+    }
   }
 }

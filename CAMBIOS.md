@@ -188,6 +188,35 @@ Takenos y que ya estaba hecho. Ahora:
   pregunta por qué medio puede depositar y dónde quiere ver el depósito
   reflejado, para que la conversación real defina eso, no la app.
 
+## Funnel: visitas por UTM → cotizaron → pagaron
+
+Nueva sección `/admin/funnel`. Cómo funciona:
+
+- Cada visita a la página pública (`/`) se registra en Firestore
+  (`visitas`), guardando `utm_source`/`utm_medium`/`utm_campaign` si el
+  link tenía esos parámetros (ej.
+  `tusitio.com/?utm_source=instagram&utm_medium=bio&utm_campaign=lanzamiento`).
+  Se cuenta **una visita por pestaña/sesión** (no una por cada recarga o
+  cambio de moneda en el cotizador).
+- El UTM de esa sesión queda guardado en `sessionStorage` del navegador, y
+  si esa misma persona termina generando una operación, la operación queda
+  etiquetada con el mismo UTM — así se puede cruzar "cuántos entraron por
+  Instagram" vs. "cuántos de esos efectivamente cotizaron y pagaron".
+- El panel muestra el embudo completo (visitas → cotizaron → pagaron, con
+  el % de conversión en cada paso) y el mismo desglose por canal.
+
+**Para usarlo**: cuando compartas el link en Instagram, WhatsApp, etc.,
+agregale los parámetros UTM correspondientes. Si compartís el link pelado
+(sin UTM), esas visitas van a agruparse como "(directo / sin UTM)" — no es
+un error, es tráfico sin campaña identificada.
+
+**Limitación real**: esto NO es Google Analytics — no distingue visitantes
+únicos que vuelven en otra sesión/dispositivo, y si alguien borra el
+`sessionStorage` o usa incógnito, cuenta como visita nueva. Para lo que
+necesitás (medir de dónde viene la gente que efectivamente cotiza) alcanza,
+pero no reemplaza una herramienta de analytics completa si más adelante
+necesitás algo más fino.
+
 ## Lo que falta (a propósito)
 
 - **Seguridad real**: las reglas de Firestore hoy son `allow read, write: if
