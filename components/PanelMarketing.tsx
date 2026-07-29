@@ -9,6 +9,8 @@ import {
 interface Tablero {
   arsABob1000: number;
   bobAArs1000: number;
+  usdtAArs: number;
+  usdtABob: number;
 }
 
 const GRUPO_WHATSAPP =
@@ -74,6 +76,8 @@ export default function PanelMarketing() {
   const plantillas = generarPlantillas({
     arsABob1000: tablero.arsABob1000,
     bobAArs1000: tablero.bobAArs1000,
+    usdtAArs: tablero.usdtAArs,
+    usdtABob: tablero.usdtABob,
     grupoWhatsapp: GRUPO_WHATSAPP,
     siteUrl: SITE_URL,
   });

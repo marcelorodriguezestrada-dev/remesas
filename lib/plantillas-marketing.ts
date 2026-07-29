@@ -1,6 +1,8 @@
 interface DatosPlantilla {
   arsABob1000: number;
   bobAArs1000: number;
+  usdtAArs: number;
+  usdtABob: number;
   grupoWhatsapp: string;
   siteUrl: string;
 }
@@ -27,7 +29,8 @@ export interface PlantillaMarketing {
 }
 
 export function generarPlantillas(datos: DatosPlantilla): PlantillaMarketing[] {
-  const { arsABob1000, bobAArs1000, grupoWhatsapp, siteUrl } = datos;
+  const { arsABob1000, bobAArs1000, usdtAArs, usdtABob, grupoWhatsapp, siteUrl } =
+    datos;
   const fechaHora = fechaHoraActual();
 
   return [
@@ -39,6 +42,7 @@ export function generarPlantillas(datos: DatosPlantilla): PlantillaMarketing[] {
         `💱 Cambio pesos ⇄ bolivianos — ${fechaHora}\n` +
         `$1.000 ARS → ${num(arsABob1000)} Bs\n` +
         `1.000 Bs → $${num(bobAArs1000)} ARS\n` +
+        `🪙 También en USDT (cripto)\n` +
         `Cotizá tu monto: ${siteUrl}\n` +
         `Consultas 👉 ${grupoWhatsapp}`,
     },
@@ -52,6 +56,7 @@ export function generarPlantillas(datos: DatosPlantilla): PlantillaMarketing[] {
         `📈 Hoy:\n` +
         `• $1.000 ARS → ${num(arsABob1000)} Bs\n` +
         `• 1.000 Bs → $${num(bobAArs1000)} ARS\n\n` +
+        `🪙 También aceptamos depósitos en USDT (cripto)\n\n` +
         `✅ Rápido y de confianza\n` +
         `🌐 Cotizá tu monto exacto acá: ${siteUrl}\n` +
         `📲 Sumate al grupo para consultar dudas:\n` +
@@ -65,9 +70,10 @@ export function generarPlantillas(datos: DatosPlantilla): PlantillaMarketing[] {
       texto:
         `💱 Tipo de cambio de hoy — ${fechaHora}\n` +
         `🇦🇷 $1.000 ARS = 🇧🇴 ${num(arsABob1000)} Bs\n` +
-        `🇧🇴 1.000 Bs = 🇦🇷 $${num(bobAArs1000)} ARS\n\n` +
+        `🇧🇴 1.000 Bs = 🇦🇷 $${num(bobAArs1000)} ARS\n` +
+        `🪙 También en USDT\n\n` +
         `¿Necesitás cambiar? Cotizá tu monto y sumate al grupo (link en bio) 👆\n\n` +
-        `#dolar #cambio #argentina #bolivia #remesas`,
+        `#dolar #cambio #argentina #bolivia #remesas #usdt #cripto`,
     },
     {
       id: "generico",
@@ -75,10 +81,24 @@ export function generarPlantillas(datos: DatosPlantilla): PlantillaMarketing[] {
       descripcion: "Para publicar en cualquier otro lado",
       texto:
         `Cambio pesos argentinos y bolivianos, tipo de cambio actualizado todos los días.\n` +
+        `También aceptamos depósitos en USDT (cripto).\n` +
         `Actualizado: ${fechaHora}\n\n` +
         `Hoy: $1.000 ARS = ${num(arsABob1000)} Bs | 1.000 Bs = $${num(bobAArs1000)} ARS\n\n` +
         `Cotizá tu monto acá: ${siteUrl}\n` +
         `Consultas: ${grupoWhatsapp}`,
+    },
+    {
+      id: "cripto_usdt",
+      etiqueta: "Grupos de cripto (USDT)",
+      descripcion: "Para comunidades cripto/Telegram — el foco es USDT, no efectivo",
+      texto:
+        `🪙 *Cambio USDT ⇄ ARS / BOB*\n` +
+        `🕐 Actualizado: ${fechaHora}\n\n` +
+        `• 1 USDT = $${num(usdtAArs)} ARS\n` +
+        `• 1 USDT = ${num(usdtABob)} Bs\n\n` +
+        `✅ Depósito directo a wallet, sin intermediarios\n` +
+        `🌐 Cotizá tu monto: ${siteUrl}\n` +
+        `📲 Consultas: ${grupoWhatsapp}`,
     },
   ];
 }
