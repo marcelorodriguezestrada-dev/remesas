@@ -1,17 +1,20 @@
 // CriptoYa (https://criptoya.com) — API pública, sin auth, sin costo.
-// No hay una fuente de "dólar blue boliviano" tan directa como DolarAPI para
-// Argentina, pero el mercado paralelo en Bolivia se arma sobre USDT/BOB en
-// plataformas P2P (Binance, Bitget, etc.), y CriptoYa agrega esos precios.
+// Precio de USDT contra distintas monedas fiat, vía plataformas P2P
+// (Binance, Bybit, Bitget, etc.). Lo usamos para dos cosas:
+//  - El paralelo boliviano (no hay una fuente de "dólar blue" tan directa
+//    como DolarAPI para Argentina; el mercado se arma sobre USDT/BOB).
+//  - El precio real que hay que ofrecer cuando el cliente deposita USDT
+//    directamente (cripto), que NO es lo mismo que el blue en pesos —
+//    son mercados distintos y pueden diferir.
 //
 // OJO: el endpoint de "cotización general" (el que usamos acá) NO devuelve
-// {ask, bid} directo — devuelve un objeto con una entrada POR CADA exchange
-// (binancep2p, bybitp2p, bitgetp2p, etc.), cada una con su propio ask/bid.
-// Promediamos entre todos para tener un precio de referencia más estable
-// que depender de un solo exchange puntual.
+// {ask, bid} directo — devuelve un objeto con una entrada POR CADA exchange,
+// cada una con su propio ask/bid. Promediamos entre todos para tener un
+// precio de referencia más estable que depender de un solo exchange.
 
-export interface CotizacionUsdtBob {
-  ask: number; // promedio de BOB que hay que pagar para comprar 1 USDT
-  bid: number; // promedio de BOB que se obtiene al vender 1 USDT
+export interface CotizacionUsdt {
+  ask: number; // promedio de la moneda fiat que hay que pagar para comprar 1 USDT
+  bid: number; // promedio de la moneda fiat que se obtiene al vender 1 USDT
   time: number; // timestamp unix más reciente entre los exchanges usados
   fuentes: number; // cuántos exchanges se promediaron, por transparencia
 }
@@ -24,10 +27,10 @@ interface CotizacionPorExchange {
   time: number;
 }
 
-const CRIPTOYA_USDT_BOB_URL = "https://criptoya.com/api/USDT/BOB/1";
+async function getCotizacionUsdt(fiat: string): Promise<CotizacionUsdt> {
+  const url = `https://criptoya.com/api/USDT/${fiat}/1`;
 
-export async function getCotizacionUsdtBob(): Promise<CotizacionUsdtBob> {
-  const res = await fetch(CRIPTOYA_USDT_BOB_URL, {
+  const res = await fetch(url, {
     headers: {
       "User-Agent": "remesas-app/1.0 (+https://criptoya.com/api docs)",
       Accept: "application/json",
@@ -39,9 +42,9 @@ export async function getCotizacionUsdtBob(): Promise<CotizacionUsdtBob> {
 
   if (!res.ok) {
     console.error(
-      `CriptoYa respondió ${res.status} para USDT/BOB. Cuerpo: ${textoRespuesta.slice(0, 500)}`
+      `CriptoYa respondió ${res.status} para USDT/${fiat}. Cuerpo: ${textoRespuesta.slice(0, 500)}`
     );
-    throw new Error(`CriptoYa respondió ${res.status} al consultar USDT/BOB`);
+    throw new Error(`CriptoYa respondió ${res.status} al consultar USDT/${fiat}`);
   }
 
   let data: Record<string, CotizacionPorExchange>;
@@ -49,9 +52,9 @@ export async function getCotizacionUsdtBob(): Promise<CotizacionUsdtBob> {
     data = JSON.parse(textoRespuesta) as Record<string, CotizacionPorExchange>;
   } catch {
     console.error(
-      `CriptoYa devolvió una respuesta no-JSON para USDT/BOB: ${textoRespuesta.slice(0, 500)}`
+      `CriptoYa devolvió una respuesta no-JSON para USDT/${fiat}: ${textoRespuesta.slice(0, 500)}`
     );
-    throw new Error("CriptoYa devolvió una respuesta inesperada para BOB");
+    throw new Error(`CriptoYa devolvió una respuesta inesperada para ${fiat}`);
   }
 
   const exchangesValidos = Object.values(data).filter(
@@ -60,9 +63,9 @@ export async function getCotizacionUsdtBob(): Promise<CotizacionUsdtBob> {
 
   if (exchangesValidos.length === 0) {
     console.error(
-      `Ningún exchange tenía cotización válida para USDT/BOB. Respuesta completa: ${JSON.stringify(data)}`
+      `Ningún exchange tenía cotización válida para USDT/${fiat}. Respuesta completa: ${JSON.stringify(data)}`
     );
-    throw new Error("CriptoYa no tiene cotizaciones disponibles para BOB ahora mismo");
+    throw new Error(`CriptoYa no tiene cotizaciones disponibles para ${fiat} ahora mismo`);
   }
 
   const promedio = (valores: number[]) =>
@@ -74,4 +77,12 @@ export async function getCotizacionUsdtBob(): Promise<CotizacionUsdtBob> {
     time: Math.max(...exchangesValidos.map((c) => c.time)),
     fuentes: exchangesValidos.length,
   };
+}
+
+export function getCotizacionUsdtBob(): Promise<CotizacionUsdt> {
+  return getCotizacionUsdt("BOB");
+}
+
+export function getCotizacionUsdtArs(): Promise<CotizacionUsdt> {
+  return getCotizacionUsdt("ARS");
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCotizacionBlue } from "@/lib/dolarapi";
-import { getCotizacionUsdtBob } from "@/lib/criptoya";
+import { getCotizacionUsdtBob, getCotizacionUsdtArs } from "@/lib/criptoya";
 import {
   calcularTipoCambioCliente,
   MARGEN_DEFAULT,
@@ -9,9 +9,9 @@ import {
   type TasasMercado,
 } from "@/lib/pricing";
 
-const MONEDAS_VALIDAS: Moneda[] = ["USD", "ARS", "BOB"];
+const MONEDAS_VALIDAS: Moneda[] = ["USD", "ARS", "BOB", "USDT"];
 
-// GET /api/cotizacion?desde=USD&hacia=ARS&margen=0.03
+// GET /api/cotizacion?desde=USDT&hacia=ARS&margen=0.03
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const desde = (searchParams.get("desde") ?? "USD") as Moneda;
@@ -38,22 +38,25 @@ export async function GET(request: Request) {
     );
   }
 
-  // Solo pedimos cada fuente si el par consultado realmente la necesita,
-  // así un problema con CriptoYa (BOB) no tira abajo también USD<->ARS.
-  const necesitaArs = desde === "ARS" || hacia === "ARS";
+  // Solo pedimos cada fuente si el par consultado realmente la necesita.
+  const necesitaArsBlue = desde === "ARS" || hacia === "ARS";
   const necesitaBob = desde === "BOB" || hacia === "BOB";
+  const necesitaArsUsdt = desde === "USDT" || hacia === "USDT";
 
   try {
-    const [blue, usdtBob] = await Promise.all([
-      necesitaArs ? getCotizacionBlue() : Promise.resolve(null),
+    const [blue, usdtBob, usdtArs] = await Promise.all([
+      necesitaArsBlue ? getCotizacionBlue() : Promise.resolve(null),
       necesitaBob ? getCotizacionUsdtBob() : Promise.resolve(null),
+      necesitaArsUsdt ? getCotizacionUsdtArs() : Promise.resolve(null),
     ]);
 
     const tasas: TasasMercado = {
       ARS: blue?.venta ?? 0,
       BOB: usdtBob?.ask ?? 0,
+      ARS_USDT: usdtArs?.ask ?? 0,
       fechaArs: blue?.fechaActualizacion ?? "",
       fechaBob: usdtBob?.time ?? 0,
+      fechaArsUsdt: usdtArs?.time ?? 0,
     };
 
     const tipoCambioCliente = calcularTipoCambioCliente(

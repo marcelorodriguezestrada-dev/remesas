@@ -217,6 +217,36 @@ necesitás (medir de dónde viene la gente que efectivamente cotiza) alcanza,
 pero no reemplaza una herramienta de analytics completa si más adelante
 necesitás algo más fino.
 
+## USDT (cripto) como moneda de depósito
+
+Ahora `USDT` es una cuarta moneda en el cotizador, además de USD/ARS/BOB.
+
+**Por qué el precio de USDT no es el mismo que el de USD**: para Bolivia
+ya veníamos usando el precio de USDT/BOB (vía CriptoYa) como referencia
+del "paralelo" — o sea que para BOB no cambia nada, USD y USDT comparten
+la misma fuente. Para Argentina, en cambio, el USD normal usa el blue
+(mercado en efectivo) y ahora agregué una fuente aparte para USDT/ARS
+(también CriptoYa, mismo estilo que USDT/BOB) — porque el dólar cripto y
+el blue son mercados distintos y pueden tener precios distintos. Todo
+esto vive en `lib/pricing.ts`, en la función `tablaHub`.
+
+**Variables de entorno nuevas** (agregalas a `.env.local` y a Render):
+```
+NEXT_PUBLIC_WALLET_USDT=tu-direccion-de-wallet
+NEXT_PUBLIC_RED_USDT=TRC20
+```
+
+**Sobre la seguridad de esto — importante**: si un cliente deposita USDT
+por una red distinta a la que configuraste (ej. tu wallet es TRC20 y te
+mandan por ERC20), **el dinero se puede perder sin ninguna forma de
+recuperarlo**. La pantalla de confirmación ya muestra un aviso en
+naranja sobre esto, pero es tu responsabilidad:
+- Confirmar que la wallet que pusiste en `NEXT_PUBLIC_WALLET_USDT`
+  soporta la red que declaraste en `NEXT_PUBLIC_RED_USDT`
+- Si tenés dudas sobre cómo verificar esto en tu wallet/exchange, es buen
+  momento para chequearlo antes de recibir el primer depósito real, no
+  después
+
 ## Lo que falta (a propósito)
 
 - **Seguridad real**: las reglas de Firestore hoy son `allow read, write: if

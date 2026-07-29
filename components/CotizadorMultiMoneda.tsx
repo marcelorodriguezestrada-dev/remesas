@@ -8,6 +8,7 @@ const MONEDAS: { valor: Moneda; etiqueta: string; simbolo: string }[] = [
   { valor: "USD", etiqueta: "Dólares (USD)", simbolo: "US$" },
   { valor: "ARS", etiqueta: "Pesos argentinos (ARS)", simbolo: "$" },
   { valor: "BOB", etiqueta: "Bolivianos (BOB)", simbolo: "Bs" },
+  { valor: "USDT", etiqueta: "USDT (cripto)", simbolo: "₮" },
 ];
 
 function simboloDe(moneda: Moneda): string {
@@ -50,6 +51,8 @@ export default function CotizadorMultiMoneda() {
 
   const takenosAlias = process.env.NEXT_PUBLIC_TAKENOS_ALIAS;
   const whatsappNumero = process.env.NEXT_PUBLIC_WHATSAPP_NUMERO;
+  const walletUsdt = process.env.NEXT_PUBLIC_WALLET_USDT;
+  const redUsdt = process.env.NEXT_PUBLIC_RED_USDT ?? "TRC20";
 
   async function cargarCotizacion() {
     setCargandoCotizacion(true);
@@ -202,6 +205,32 @@ export default function CotizadorMultiMoneda() {
             <p className="text-xs text-green-700/70">
               ¿Preferís otro medio para depositar? No hay problema, seguí
               por WhatsApp abajo y lo coordinamos.
+            </p>
+          </div>
+        ) : operacionConfirmada.monedaOrigen === "USDT" ? (
+          <div className="mb-5 rounded-xl bg-blue-50 px-5 py-4 space-y-2">
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm text-blue-700">Podés depositar</span>
+              <span className="text-3xl font-bold text-blue-600">
+                {formatearMonto(
+                  operacionConfirmada.montoOrigen,
+                  operacionConfirmada.monedaOrigen
+                )}
+              </span>
+            </div>
+            <p className="text-sm text-blue-700/80">a esta wallet:</p>
+            <p className="break-all rounded-lg bg-white px-4 py-3 text-center text-sm font-semibold text-zinc-900 ring-1 ring-blue-200">
+              {walletUsdt ?? "(falta configurar la wallet de USDT)"}
+            </p>
+            <p className="rounded-lg bg-amber-100 px-3 py-2 text-xs font-medium text-amber-800">
+              ⚠️ Enviá SOLO por red {redUsdt}. Si la mandás por otra red
+              (ERC20, BEP20, etc.) el dinero se puede perder sin forma de
+              recuperarlo — no somos responsables por depósitos a la red
+              equivocada.
+            </p>
+            <p className="text-xs text-blue-700/70">
+              ¿Tenés dudas sobre la red o preferís otro medio? Seguí por
+              WhatsApp abajo antes de enviar.
             </p>
           </div>
         ) : (

@@ -9,7 +9,7 @@ import {
 import { extraerCompraVenta } from "@/lib/parse-cotizacion-texto";
 import type { Moneda, Cotizacion } from "@/lib/pricing";
 
-const MONEDAS: Moneda[] = ["USD", "ARS", "BOB"];
+const MONEDAS: Moneda[] = ["USD", "ARS", "BOB", "USDT"];
 
 export default function PanelCompetencia() {
   const [observaciones, setObservaciones] = useState<ObservacionCompetencia[]>(

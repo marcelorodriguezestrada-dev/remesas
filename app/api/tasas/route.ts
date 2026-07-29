@@ -15,8 +15,10 @@ export async function GET() {
     const tasas: TasasMercado = {
       ARS: blue.venta,
       BOB: usdtBob.ask,
+      ARS_USDT: 0, // no se usa en este tablero (solo ARS<->BOB, pivotea por USD)
       fechaArs: blue.fechaActualizacion,
       fechaBob: usdtBob.time,
+      fechaArsUsdt: 0,
     };
 
     const margenPct = MARGEN_DEFAULT;

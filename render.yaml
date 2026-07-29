@@ -25,5 +25,9 @@ services:
         sync: false
       - key: NEXT_PUBLIC_SITE_URL
         sync: false
+      - key: NEXT_PUBLIC_WALLET_USDT
+        sync: false
+      - key: NEXT_PUBLIC_RED_USDT
+        value: "TRC20"
       - key: MARGEN_PORCENTAJE_DEFAULT
         value: "0.025"
