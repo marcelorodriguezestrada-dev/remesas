@@ -31,3 +31,9 @@ services:
         value: "TRC20"
       - key: MARGEN_PORCENTAJE_DEFAULT
         value: "0.025"
+      - key: FACEBOOK_PAGE_ID
+        sync: false
+      - key: FACEBOOK_PAGE_ACCESS_TOKEN
+        sync: false
+      - key: CRON_SECRET
+        sync: false

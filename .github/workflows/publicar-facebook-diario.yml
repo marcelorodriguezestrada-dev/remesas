@@ -1,0 +1,23 @@
+name: Publicar cotización en Facebook
+
+# Corre todos los días a las 15:00 UTC = 12:00 ARG (UTC-3) durante todo el
+# año, ya que Argentina no cambia de horario. Ajustá la hora acá si querés
+# publicar en otro momento del día.
+on:
+  schedule:
+    - cron: "0 15 * * *"
+  workflow_dispatch: {} # también se puede disparar a mano desde la pestaña Actions
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Llamar al endpoint de publicación
+        run: |
+          # El plan free de Render duerme la app tras un rato sin tráfico:
+          # el primer pedido del día puede tardar bastante en "despertarla".
+          # Los reintentos con retry-delay le dan tiempo a levantar antes
+          # de darse por vencido.
+          curl --fail --silent --show-error \
+            --retry 4 --retry-delay 30 --max-time 120 \
+            "${{ secrets.RENDER_APP_URL }}/api/marketing/publicar-facebook?secret=${{ secrets.CRON_SECRET }}"

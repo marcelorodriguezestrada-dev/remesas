@@ -35,5 +35,15 @@ service cloud.firestore {
       allow read: if request.auth != null;
       allow write: if true;
     }
+
+    match /publicaciones_marketing/{publicacionId} {
+      // La escribe nuestro propio servidor, tanto desde el cron diario
+      // (sin sesión de usuario, protegido por CRON_SECRET a nivel de API)
+      // como desde el botón "Publicar ahora" del admin — por eso la
+      // escritura es pública igual que en historial_tasas. La lectura del
+      // historial completo queda solo para el admin logueado.
+      allow read: if request.auth != null;
+      allow write: if true;
+    }
   }
 }
