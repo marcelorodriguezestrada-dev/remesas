@@ -11,7 +11,7 @@ import { publicarCotizacionEnFacebook } from "@/lib/marketing-publicacion";
 // detrás de AdminGuard (sesión de Firebase Auth requerida).
 export async function POST() {
   try {
-    const resultado = await publicarCotizacionEnFacebook();
+    const resultado = await publicarCotizacionEnFacebook("manual");
     if (!resultado.ok) {
       return NextResponse.json({ error: resultado.error }, { status: 502 });
     }

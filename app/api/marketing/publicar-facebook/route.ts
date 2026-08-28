@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   }
 
   try {
-    const resultado = await publicarCotizacionEnFacebook();
+    const resultado = await publicarCotizacionEnFacebook("cron");
     if (!resultado.ok) {
       return NextResponse.json({ error: resultado.error }, { status: 502 });
     }

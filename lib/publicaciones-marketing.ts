@@ -6,6 +6,7 @@ const COLECCION = "publicaciones_marketing";
 export interface RegistroPublicacion {
   fechaHora: string; // ISO
   canal: "facebook";
+  origen: "cron" | "manual";
   ok: boolean;
   texto: string;
   postId?: string;

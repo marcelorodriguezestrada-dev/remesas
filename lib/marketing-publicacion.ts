@@ -25,7 +25,9 @@ export interface ResultadoPublicacionCotizacion {
  * en la plantilla o en cómo se arma el mensaje fácilmente quedaría
  * aplicado en uno y olvidado en el otro.
  */
-export async function publicarCotizacionEnFacebook(): Promise<ResultadoPublicacionCotizacion> {
+export async function publicarCotizacionEnFacebook(
+  origen: "cron" | "manual"
+): Promise<ResultadoPublicacionCotizacion> {
   const pageId = process.env.FACEBOOK_PAGE_ID;
   const pageAccessToken = process.env.FACEBOOK_PAGE_ACCESS_TOKEN;
   if (!pageId || !pageAccessToken) {
@@ -56,6 +58,7 @@ export async function publicarCotizacionEnFacebook(): Promise<ResultadoPublicaci
   await registrarPublicacion({
     fechaHora: new Date().toISOString(),
     canal: "facebook",
+    origen,
     ok: resultado.ok,
     texto,
     postId: resultado.postId,

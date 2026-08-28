@@ -16,6 +16,7 @@ interface Tablero {
 interface PublicacionHistorial {
   fechaHora: string;
   ok: boolean;
+  origen?: "cron" | "manual";
   error?: string;
 }
 
@@ -127,7 +128,12 @@ function PanelPublicacionAutomatica() {
         </p>
       )}
 
-      <p className="mb-2 text-xs font-medium text-zinc-500">Últimas publicaciones</p>
+      <div className="mb-2 flex items-center justify-between">
+        <p className="text-xs font-medium text-zinc-500">Últimas publicaciones</p>
+        <a href="/admin/marketing/historial" className="text-xs font-medium text-blue-600 hover:underline">
+          Ver dashboard completo →
+        </a>
+      </div>
       {cargandoHistorial ? (
         <p className="text-xs text-zinc-400">Cargando…</p>
       ) : historial.length === 0 ? (
@@ -136,11 +142,14 @@ function PanelPublicacionAutomatica() {
         <ul className="space-y-1">
           {historial.map((h) => (
             <li key={h.fechaHora} className="flex items-center justify-between text-xs">
-              <span className="text-zinc-500">
+              <span className="flex items-center gap-2 text-zinc-500">
                 {new Date(h.fechaHora).toLocaleString("es-AR", {
                   dateStyle: "short",
                   timeStyle: "short",
                 })}
+                <span className="text-[10px] text-zinc-400">
+                  {h.origen === "manual" ? "🖐️ manual" : h.origen === "cron" ? "🤖 auto" : ""}
+                </span>
               </span>
               <span className={h.ok ? "text-emerald-600" : "text-red-500"}>
                 {h.ok ? "✅ Publicado" : `❌ ${h.error ?? "Error"}`}
