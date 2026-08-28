@@ -25,6 +25,8 @@ services:
         sync: false
       - key: NEXT_PUBLIC_SITE_URL
         sync: false
+      - key: NEXT_PUBLIC_FACEBOOK_PAGE_URL
+        sync: false
       - key: NEXT_PUBLIC_WALLET_USDT
         sync: false
       - key: NEXT_PUBLIC_RED_USDT

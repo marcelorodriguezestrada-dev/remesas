@@ -19,6 +19,13 @@ export interface CotizacionUsdt {
   fuentes: number; // cuántos exchanges se promediaron, por transparencia
 }
 
+export interface CotizacionExchange {
+  exchange: string;
+  ask: number;
+  bid: number;
+  time: number;
+}
+
 interface CotizacionPorExchange {
   ask: number;
   totalAsk: number;
@@ -27,7 +34,7 @@ interface CotizacionPorExchange {
   time: number;
 }
 
-async function getCotizacionUsdt(fiat: string): Promise<CotizacionUsdt> {
+async function consultarCriptoYa(fiat: string): Promise<Record<string, CotizacionPorExchange>> {
   const url = `https://criptoya.com/api/USDT/${fiat}/1`;
 
   const res = await fetch(url, {
@@ -47,15 +54,18 @@ async function getCotizacionUsdt(fiat: string): Promise<CotizacionUsdt> {
     throw new Error(`CriptoYa respondió ${res.status} al consultar USDT/${fiat}`);
   }
 
-  let data: Record<string, CotizacionPorExchange>;
   try {
-    data = JSON.parse(textoRespuesta) as Record<string, CotizacionPorExchange>;
+    return JSON.parse(textoRespuesta) as Record<string, CotizacionPorExchange>;
   } catch {
     console.error(
       `CriptoYa devolvió una respuesta no-JSON para USDT/${fiat}: ${textoRespuesta.slice(0, 500)}`
     );
     throw new Error(`CriptoYa devolvió una respuesta inesperada para ${fiat}`);
   }
+}
+
+async function getCotizacionUsdt(fiat: string): Promise<CotizacionUsdt> {
+  const data = await consultarCriptoYa(fiat);
 
   const exchangesValidos = Object.values(data).filter(
     (c) => c && c.ask > 0 && c.bid > 0
@@ -77,6 +87,19 @@ async function getCotizacionUsdt(fiat: string): Promise<CotizacionUsdt> {
     time: Math.max(...exchangesValidos.map((c) => c.time)),
     fuentes: exchangesValidos.length,
   };
+}
+
+/**
+ * El desglose CRUDO por exchange (no el promedio) — esto es lo que
+ * necesitamos para encontrar la mejor plaza puntual donde comprar/vender
+ * USDT, en vez de operar siempre al precio promedio.
+ */
+export async function getDesgloseUsdt(fiat: string): Promise<CotizacionExchange[]> {
+  const data = await consultarCriptoYa(fiat);
+
+  return Object.entries(data)
+    .filter(([, c]) => c && c.ask > 0 && c.bid > 0)
+    .map(([exchange, c]) => ({ exchange, ask: c.ask, bid: c.bid, time: c.time }));
 }
 
 export function getCotizacionUsdtBob(): Promise<CotizacionUsdt> {

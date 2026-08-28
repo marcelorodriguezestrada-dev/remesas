@@ -20,10 +20,31 @@ interface PublicacionHistorial {
   error?: string;
 }
 
+interface RutaOportunidad {
+  exchangeCompra: string;
+  precioCompra: number;
+  exchangeVenta: string;
+  precioVenta: number;
+  tasaResultante: number;
+  tasaPromedio: number;
+  mejoraPct: number;
+}
+
+interface Oportunidad {
+  actualizado: string;
+  arsHaciaBob: RutaOportunidad;
+  bobHaciaArs: RutaOportunidad;
+  desgloseArs: { exchange: string; ask: number; bid: number }[];
+  desgloseBob: { exchange: string; ask: number; bid: number }[];
+}
+
 const GRUPO_WHATSAPP =
   process.env.NEXT_PUBLIC_GRUPO_WHATSAPP ?? "(falta configurar el link del grupo)";
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "(falta configurar NEXT_PUBLIC_SITE_URL)";
+const FACEBOOK_PAGE_URL =
+  process.env.NEXT_PUBLIC_FACEBOOK_PAGE_URL ??
+  "https://www.facebook.com/profile.php?id=61593971301921";
 
 function TarjetaPlantilla({ plantilla }: { plantilla: PlantillaMarketing }) {
   const [copiado, setCopiado] = useState(false);
@@ -162,6 +183,201 @@ function PanelPublicacionAutomatica() {
   );
 }
 
+function PanelCanales() {
+  return (
+    <div className="mb-8 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-100">
+      <p className="mb-3 font-semibold text-zinc-900">Canales</p>
+      <div className="space-y-2">
+        <a
+          href={FACEBOOK_PAGE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between rounded-xl bg-zinc-50 px-4 py-3 text-sm text-zinc-700 hover:bg-zinc-100"
+        >
+          <span className="flex items-center gap-2">
+            <span>📘</span> Página de Facebook (Remesas)
+          </span>
+          <span className="text-zinc-400">↗</span>
+        </a>
+        <a
+          href={GRUPO_WHATSAPP}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between rounded-xl bg-zinc-50 px-4 py-3 text-sm text-zinc-700 hover:bg-zinc-100"
+        >
+          <span className="flex items-center gap-2">
+            <span>💬</span> Grupo de WhatsApp
+          </span>
+          <span className="text-zinc-400">↗</span>
+        </a>
+        <a
+          href={SITE_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-between rounded-xl bg-zinc-50 px-4 py-3 text-sm text-zinc-700 hover:bg-zinc-100"
+        >
+          <span className="flex items-center gap-2">
+            <span>🌐</span> Sitio / cotizador
+          </span>
+          <span className="text-zinc-400">↗</span>
+        </a>
+      </div>
+      <p className="mt-3 text-[11px] text-zinc-400">
+        La publicación automática en Facebook usa el Page ID configurado por variable de
+        entorno en el servidor (puede ser distinto al de este link, que es solo para que lo
+        abras vos con un click).
+      </p>
+    </div>
+  );
+}
+
+function TarjetaRuta({
+  titulo,
+  monedaOrigen,
+  monedaDestino,
+  ruta,
+}: {
+  titulo: string;
+  monedaOrigen: string;
+  monedaDestino: string;
+  ruta: RutaOportunidad;
+}) {
+  const mejora = ruta.mejoraPct;
+  const tonoMejora =
+    mejora > 0.3 ? "text-emerald-600" : mejora < -0.3 ? "text-red-500" : "text-zinc-500";
+
+  return (
+    <div className="rounded-2xl bg-zinc-50 p-4">
+      <p className="mb-2 text-sm font-semibold text-zinc-800">{titulo}</p>
+      <div className="mb-2 grid grid-cols-2 gap-2 text-xs">
+        <div className="rounded-lg bg-white p-2.5 ring-1 ring-zinc-100">
+          <p className="text-zinc-400">1. Comprás USDT con {monedaOrigen} en</p>
+          <p className="font-semibold text-zinc-800">{ruta.exchangeCompra}</p>
+          <p className="text-zinc-500">a {ruta.precioCompra.toLocaleString("es-AR", { maximumFractionDigits: 4 })}</p>
+        </div>
+        <div className="rounded-lg bg-white p-2.5 ring-1 ring-zinc-100">
+          <p className="text-zinc-400">2. Vendés USDT por {monedaDestino} en</p>
+          <p className="font-semibold text-zinc-800">{ruta.exchangeVenta}</p>
+          <p className="text-zinc-500">a {ruta.precioVenta.toLocaleString("es-AR", { maximumFractionDigits: 4 })}</p>
+        </div>
+      </div>
+      <p className="text-xs text-zinc-500">
+        Rinde{" "}
+        <span className="font-semibold text-zinc-800">
+          {ruta.tasaResultante.toLocaleString("es-AR", { maximumFractionDigits: 5 })}
+        </span>{" "}
+        {monedaDestino} por {monedaOrigen}, contra{" "}
+        {ruta.tasaPromedio.toLocaleString("es-AR", { maximumFractionDigits: 5 })} operando al
+        promedio de todos los exchanges —{" "}
+        <span className={`font-semibold ${tonoMejora}`}>
+          {mejora >= 0 ? "+" : ""}
+          {mejora.toFixed(2)}%
+        </span>
+      </p>
+    </div>
+  );
+}
+
+function PanelOportunidad() {
+  const [datos, setDatos] = useState<Oportunidad | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [mostrarDesglose, setMostrarDesglose] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/oportunidad", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.error) throw new Error(data.error);
+        setDatos(data as Oportunidad);
+      })
+      .catch((err) => setError(err instanceof Error ? err.message : "No se pudo cargar"));
+  }, []);
+
+  return (
+    <div className="mb-8 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-zinc-100">
+      <p className="font-semibold text-zinc-900">💡 Oportunidad entre exchanges</p>
+      <p className="mb-4 text-xs text-zinc-400">
+        Comparamos cada exchange que agrega CriptoYa (Binance P2P, Buenbit, etc.) para
+        encontrar dónde te conviene comprar y dónde te conviene vender USDT en este momento
+        — en vez de operar siempre al precio promedio, como hace el tablero público.
+      </p>
+
+      {error && (
+        <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">{error}</p>
+      )}
+
+      {!datos && !error && <p className="text-xs text-zinc-400">Calculando…</p>}
+
+      {datos && (
+        <>
+          <div className="space-y-3">
+            <TarjetaRuta
+              titulo="Ruta ARS → BOB"
+              monedaOrigen="ARS"
+              monedaDestino="BOB"
+              ruta={datos.arsHaciaBob}
+            />
+            <TarjetaRuta
+              titulo="Ruta BOB → ARS"
+              monedaOrigen="BOB"
+              monedaDestino="ARS"
+              ruta={datos.bobHaciaArs}
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setMostrarDesglose((v) => !v)}
+            className="mt-3 text-xs font-medium text-blue-600 hover:underline"
+          >
+            {mostrarDesglose ? "Ocultar" : "Ver"} desglose completo por exchange
+          </button>
+
+          {mostrarDesglose && (
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {[
+                { titulo: "USDT / ARS", filas: datos.desgloseArs },
+                { titulo: "USDT / BOB", filas: datos.desgloseBob },
+              ].map(({ titulo, filas }) => (
+                <div key={titulo} className="overflow-hidden rounded-xl ring-1 ring-zinc-100">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-zinc-50 text-zinc-400">
+                      <tr>
+                        <th className="px-3 py-2 font-medium">{titulo}</th>
+                        <th className="px-3 py-2 font-medium">Compra</th>
+                        <th className="px-3 py-2 font-medium">Venta</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filas.map((f) => (
+                        <tr key={f.exchange} className="border-t border-zinc-50">
+                          <td className="px-3 py-1.5 text-zinc-600">{f.exchange}</td>
+                          <td className="px-3 py-1.5 text-zinc-800">
+                            {f.ask.toLocaleString("es-AR", { maximumFractionDigits: 3 })}
+                          </td>
+                          <td className="px-3 py-1.5 text-zinc-800">
+                            {f.bid.toLocaleString("es-AR", { maximumFractionDigits: 3 })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <p className="mt-3 text-[11px] text-zinc-400">
+            &quot;Compra&quot; es lo que pagás por 1 USDT, &quot;Venta&quot; es lo que te dan
+            por 1 USDT — no incluye la comisión propia de cada exchange por operar
+            (retiro/red, etc.), que varía y no la publica CriptoYa.
+          </p>
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function PanelMarketing() {
   const [tablero, setTablero] = useState<Tablero | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -210,6 +426,8 @@ export default function PanelMarketing() {
       </p>
 
       <PanelPublicacionAutomatica />
+      <PanelCanales />
+      <PanelOportunidad />
 
       <div className="space-y-4">
         {plantillas.map((p) => (
