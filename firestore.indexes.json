@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "articulos_mercado",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "publicado", "order": "ASCENDING" },
+        { "fieldPath": "fechaCreacion", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

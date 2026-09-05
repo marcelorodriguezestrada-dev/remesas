@@ -1,9 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+
+const SECCIONES = [
+  { href: "/admin/dashboard", etiqueta: "Dashboard" },
+  { href: "/admin/marketing", etiqueta: "Marketing" },
+  { href: "/admin/analisis", etiqueta: "Análisis" },
+  { href: "/admin/funnel", etiqueta: "Funnel" },
+  { href: "/admin/competencia", etiqueta: "Competencia" },
+];
 
 export default function AdminGuard({
   children,
@@ -11,6 +20,7 @@ export default function AdminGuard({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [usuario, setUsuario] = useState<User | null | undefined>(undefined);
 
   useEffect(() => {
@@ -49,6 +59,22 @@ export default function AdminGuard({
           Cerrar sesión
         </button>
       </div>
+      <nav className="mx-auto mt-3 flex max-w-2xl gap-1 overflow-x-auto px-4">
+        {SECCIONES.map((s) => (
+          <Link
+            key={s.href}
+            href={s.href}
+            className={[
+              "whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-medium",
+              pathname?.startsWith(s.href)
+                ? "bg-zinc-900 text-white"
+                : "text-zinc-500 hover:bg-zinc-100",
+            ].join(" ")}
+          >
+            {s.etiqueta}
+          </Link>
+        ))}
+      </nav>
       {children}
     </div>
   );

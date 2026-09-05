@@ -100,5 +100,20 @@ export function generarPlantillas(datos: DatosPlantilla): PlantillaMarketing[] {
         `🌐 Cotizá tu monto: ${siteUrl}\n` +
         `📲 Consultas: ${grupoWhatsapp}`,
     },
+    {
+      id: "efectivo_potosi",
+      etiqueta: "Efectivo en Potosí",
+      descripcion:
+        "Para mencionar el punto de entrega/retiro en efectivo en Potosí — sin dirección pública, se coordina por WhatsApp",
+      texto:
+        `📍 *Ahora también en efectivo en Potosí*\n` +
+        `Podés retirar o entregar tus bolivianos en efectivo, ahí mismo en Potosí.\n\n` +
+        `💱 Cambio de hoy — ${fechaHora}\n` +
+        `• $1.000 ARS → ${num(arsABob1000)} Bs\n` +
+        `• 1.000 Bs → $${num(bobAArs1000)} ARS\n\n` +
+        `📲 Coordinamos horario y punto de encuentro por WhatsApp:\n` +
+        `${grupoWhatsapp}\n\n` +
+        `Sin monto mínimo ni máximo — lo vemos caso por caso según el monto.`,
+    },
   ];
 }

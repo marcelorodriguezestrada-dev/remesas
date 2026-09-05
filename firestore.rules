@@ -37,13 +37,26 @@ service cloud.firestore {
     }
 
     match /publicaciones_marketing/{publicacionId} {
-      // La escribe nuestro propio servidor, tanto desde el cron diario
-      // (sin sesión de usuario, protegido por CRON_SECRET a nivel de API)
-      // como desde el botón "Publicar ahora" del admin — por eso la
-      // escritura es pública igual que en historial_tasas. La lectura del
-      // historial completo queda solo para el admin logueado.
+      // La ESCRITURA la hace nuestro propio servidor (sin sesión de
+      // usuario): tanto el cron diario (protegido por CRON_SECRET a nivel
+      // de API) como el botón "Publicar ahora". La LECTURA en cambio se
+      // hace siempre desde el navegador del admin ya logueado (nunca
+      // desde una ruta de servidor sin sesión) — si alguna vez se lee
+      // esta colección desde un endpoint de servidor, esa lectura va a
+      // fallar acá porque no hay request.auth en ese contexto.
       allow read: if request.auth != null;
       allow write: if true;
+    }
+
+    match /articulos_mercado/{articuloId} {
+      // Cualquiera (visitante anónimo, o el propio servidor renderizando
+      // /analisis para SEO) puede leer un artículo YA publicado. Los
+      // borradores (publicado == false) solo los puede leer el admin
+      // logueado, y siempre se leen desde el navegador (ver /admin/analisis).
+      allow read: if resource.data.publicado == true || request.auth != null;
+      // Crear/editar/borrar SIEMPRE desde el navegador del admin logueado
+      // (no hay ninguna ruta de servidor que escriba acá).
+      allow write: if request.auth != null;
     }
   }
 }

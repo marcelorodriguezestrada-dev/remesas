@@ -5,19 +5,13 @@ import {
   generarPlantillas,
   type PlantillaMarketing,
 } from "@/lib/plantillas-marketing";
+import { listarPublicaciones, type RegistroPublicacion } from "@/lib/publicaciones-marketing";
 
 interface Tablero {
   arsABob1000: number;
   bobAArs1000: number;
   usdtAArs: number;
   usdtABob: number;
-}
-
-interface PublicacionHistorial {
-  fechaHora: string;
-  ok: boolean;
-  origen?: "cron" | "manual";
-  error?: string;
 }
 
 interface RutaOportunidad {
@@ -78,17 +72,19 @@ function PanelPublicacionAutomatica() {
   const [ultimoResultado, setUltimoResultado] = useState<
     { ok: boolean; mensaje: string } | null
   >(null);
-  const [historial, setHistorial] = useState<PublicacionHistorial[]>([]);
+  const [historial, setHistorial] = useState<RegistroPublicacion[]>([]);
   const [cargandoHistorial, setCargandoHistorial] = useState(true);
 
   async function cargarHistorial() {
     setCargandoHistorial(true);
     try {
-      const res = await fetch("/api/marketing/historial-facebook", { cache: "no-store" });
-      const data = await res.json();
-      setHistorial(Array.isArray(data) ? data : []);
-    } catch {
-      // Silencioso: el historial es informativo, no bloquea el resto del panel.
+      const publicaciones = await listarPublicaciones(5);
+      setHistorial(publicaciones);
+    } catch (err) {
+      // Antes esto fallaba en silencio porque se leía vía una ruta de
+      // servidor sin sesión de Firebase, y la regla de Firestore exige
+      // estar logueado — acá si falla, al menos queda en consola.
+      console.error("No se pudo cargar el historial de publicaciones:", err);
     } finally {
       setCargandoHistorial(false);
     }

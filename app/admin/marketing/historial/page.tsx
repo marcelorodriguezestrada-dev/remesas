@@ -2,15 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-
-interface RegistroPublicacion {
-  fechaHora: string;
-  ok: boolean;
-  origen?: "cron" | "manual";
-  texto: string;
-  postId?: string;
-  error?: string;
-}
+import { listarPublicaciones, type RegistroPublicacion } from "@/lib/publicaciones-marketing";
 
 function TarjetaStat({
   etiqueta,
@@ -63,9 +55,8 @@ export default function HistorialMarketingPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/marketing/historial-facebook?cantidad=100", { cache: "no-store" })
-      .then((res) => res.json())
-      .then((data) => setRegistros(Array.isArray(data) ? data : []))
+    listarPublicaciones(100)
+      .then((data) => setRegistros(data))
       .catch(() => setError("No se pudo cargar el historial"));
   }, []);
 
