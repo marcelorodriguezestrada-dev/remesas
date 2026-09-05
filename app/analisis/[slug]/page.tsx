@@ -7,11 +7,23 @@ interface Props {
   params: Promise<{ slug: string }>;
 }
 
-export const revalidate = 1800; // 30 min
+// Mismo motivo que en /analisis: esta página depende de Firestore en cada
+// visita, y no queremos que el build entero del sitio dependa de que
+// Firestore responda bien en ese instante.
+export const dynamic = "force-dynamic";
+
+async function obtenerArticuloSeguro(slug: string) {
+  try {
+    return await obtenerArticulo(slug);
+  } catch (err) {
+    console.error(`Error obteniendo el artículo "${slug}":`, err);
+    return null;
+  }
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const articulo = await obtenerArticulo(slug);
+  const articulo = await obtenerArticuloSeguro(slug);
 
   if (!articulo || !articulo.publicado) {
     return { title: "Análisis no encontrado" };
@@ -31,7 +43,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function ArticuloPage({ params }: Props) {
   const { slug } = await params;
-  const articulo = await obtenerArticulo(slug);
+  const articulo = await obtenerArticuloSeguro(slug);
 
   if (!articulo || !articulo.publicado) {
     notFound();
