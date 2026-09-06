@@ -28,7 +28,20 @@ párrafos completos separados por "\\n\\n".`;
 
 // Groq expone una API compatible con el formato de OpenAI (chat completions),
 // así que la llamada es un POST simple con Bearer token — nada de SDKs.
-const GROQ_MODEL = "llama-3.3-70b-versatile";
+//
+// Este es el modelo más liviano de la tabla "Production Models" de Groq:
+// suficiente para armar un artículo corto y estructurado, y con más
+// margen dentro del tier gratis (rate limits más generosos que un modelo
+// grande). Sin tarjeta cargada en tu cuenta de Groq, no te pueden cobrar
+// nada — el free tier solo limita cuántos pedidos por minuto hacés, no
+// cobra automático.
+//
+// OJO: Groq va moviendo modelos entre "Production" y "Enterprise" (solo
+// con contrato) sin mucho aviso. Si este modelo alguna vez responde 404
+// con "does not exist or you do not have access to it", entrá a
+// https://console.groq.com/docs/models y fijate cuál está en la tabla
+// "Production Models" (no en "Enterprise" / "Contact Sales").
+const GROQ_MODEL = "openai/gpt-oss-20b";
 
 export async function generarBorradorArticulo(tema?: string): Promise<BorradorArticulo> {
   const apiKey = process.env.GROQ_API_KEY;
