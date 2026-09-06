@@ -73,9 +73,15 @@ Datos actuales (${new Date(tablero.actualizado).toLocaleString("es-AR")}):
     },
     body: JSON.stringify({
       model: GROQ_MODEL,
-      max_tokens: 1500,
+      max_completion_tokens: 4000,
       temperature: 0.7,
       response_format: { type: "json_object" },
+      // Los modelos gpt-oss "piensan" antes de responder, gastando tokens
+      // en ese razonamiento interno — con esfuerzo "low" y el razonamiento
+      // oculto del content, casi todo el presupuesto de tokens queda
+      // disponible para escribir el artículo en sí, no para pensarlo.
+      reasoning_effort: "low",
+      reasoning_format: "hidden",
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userPrompt },
