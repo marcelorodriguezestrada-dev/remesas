@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { obtenerArticulo } from "@/lib/articulos";
+import BotonesCompartir from "@/components/BotonesCompartir";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://remesas-4bgn.onrender.com";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -82,6 +85,8 @@ export default async function ArticuloPage({ params }: Props) {
           </p>
         ))}
       </div>
+
+      <BotonesCompartir url={`${SITE_URL}/analisis/${slug}`} titulo={articulo.titulo} />
 
       <Link
         href="/"

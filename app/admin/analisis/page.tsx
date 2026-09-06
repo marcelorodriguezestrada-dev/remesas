@@ -20,6 +20,8 @@ export default function AnalisisAdminPage() {
   const [generando, setGenerando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [publicandoFb, setPublicandoFb] = useState<string | null>(null); // slug en curso
+  const [resultadoFb, setResultadoFb] = useState<{ slug: string; ok: boolean; mensaje: string } | null>(null);
 
   async function cargar() {
     try {
@@ -114,6 +116,29 @@ export default function AnalisisAdminPage() {
       setError(err instanceof Error ? err.message : "No se pudo guardar");
     } finally {
       setGuardando(false);
+    }
+  }
+
+  async function publicarEnFacebook(a: Articulo) {
+    setPublicandoFb(a.slug);
+    setResultadoFb(null);
+    try {
+      const res = await fetch("/api/admin/articulos/publicar-facebook", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: a.slug }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Error desconocido");
+      setResultadoFb({ slug: a.slug, ok: true, mensaje: "Publicado en Facebook ✅" });
+    } catch (err) {
+      setResultadoFb({
+        slug: a.slug,
+        ok: false,
+        mensaje: err instanceof Error ? err.message : "Error desconocido",
+      });
+    } finally {
+      setPublicandoFb(null);
     }
   }
 
@@ -301,13 +326,22 @@ export default function AnalisisAdminPage() {
                   </div>
                   <div className="flex flex-shrink-0 flex-col items-end gap-1.5">
                     {a.publicado ? (
-                      <Link
-                        href={`/analisis/${a.slug}`}
-                        target="_blank"
-                        className="text-xs font-medium text-blue-600 hover:underline"
-                      >
-                        Ver publicado ↗
-                      </Link>
+                      <>
+                        <Link
+                          href={`/analisis/${a.slug}`}
+                          target="_blank"
+                          className="text-xs font-medium text-blue-600 hover:underline"
+                        >
+                          Ver publicado ↗
+                        </Link>
+                        <button
+                          onClick={() => void publicarEnFacebook(a)}
+                          disabled={publicandoFb === a.slug}
+                          className="text-xs font-medium text-blue-700 hover:underline disabled:opacity-50"
+                        >
+                          {publicandoFb === a.slug ? "Publicando…" : "📘 Publicar en Facebook"}
+                        </button>
+                      </>
                     ) : (
                       <button
                         onClick={() => void publicar(a)}
@@ -338,6 +372,15 @@ export default function AnalisisAdminPage() {
                     </button>
                   </div>
                 </div>
+                {resultadoFb?.slug === a.slug && (
+                  <p
+                    className={`mt-2 text-xs ${
+                      resultadoFb.ok ? "text-emerald-600" : "text-red-500"
+                    }`}
+                  >
+                    {resultadoFb.mensaje}
+                  </p>
+                )}
               </div>
             ))
           )}
