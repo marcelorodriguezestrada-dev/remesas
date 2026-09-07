@@ -9,11 +9,13 @@ import {
   eliminarArticulo,
   type Articulo,
 } from "@/lib/articulos";
+import { obtenerVistasPorArticulo } from "@/lib/vistas-articulos";
 
 const VACIO = { titulo: "", resumen: "", contenido: "", tags: "" };
 
 export default function AnalisisAdminPage() {
   const [articulos, setArticulos] = useState<Articulo[] | null>(null);
+  const [vistas, setVistas] = useState<Record<string, number>>({});
   const [editando, setEditando] = useState<string | null>(null); // slug, o "nuevo"
   const [form, setForm] = useState(VACIO);
   const [tema, setTema] = useState("");
@@ -25,8 +27,17 @@ export default function AnalisisAdminPage() {
 
   async function cargar() {
     try {
-      const data = await listarTodosLosArticulos(50);
+      const [data, vistasData] = await Promise.all([
+        listarTodosLosArticulos(50),
+        obtenerVistasPorArticulo().catch((err) => {
+          // Si esto falla (ej. índice/regla pendiente), no bloqueamos el
+          // resto del panel — simplemente no se muestra el contador.
+          console.error("No se pudieron cargar las vistas:", err);
+          return {};
+        }),
+      ]);
       setArticulos(data);
+      setVistas(vistasData);
     } catch (err) {
       console.error(err);
       setError("No se pudo cargar la lista de artículos.");
@@ -317,6 +328,11 @@ export default function AnalisisAdminPage() {
                         {a.publicado ? "Publicado" : "Borrador"}
                       </span>
                       <span>{a.autor === "ia" ? "✨ IA" : "✍️ Manual"}</span>
+                      {a.publicado && (
+                        <span className="font-medium text-zinc-500">
+                          👁 {vistas[a.slug] ?? 0} vistas
+                        </span>
+                      )}
                       <span>
                         {new Date(a.fechaCreacion).toLocaleDateString("es-AR", {
                           dateStyle: "medium",

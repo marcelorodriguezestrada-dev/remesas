@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { obtenerArticulo } from "@/lib/articulos";
 import BotonesCompartir from "@/components/BotonesCompartir";
+import TrackerVistaArticulo from "@/components/TrackerVistaArticulo";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://remesas-4bgn.onrender.com";
 
@@ -56,6 +57,7 @@ export default async function ArticuloPage({ params }: Props) {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-2xl flex-col px-4 py-12">
+      <TrackerVistaArticulo slug={slug} />
       <Link href="/analisis" className="mb-6 text-sm text-blue-600 hover:underline">
         ← Todos los análisis
       </Link>
