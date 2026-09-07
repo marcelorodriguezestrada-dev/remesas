@@ -19,6 +19,7 @@ export default function AnalisisAdminPage() {
   const [editando, setEditando] = useState<string | null>(null); // slug, o "nuevo"
   const [form, setForm] = useState(VACIO);
   const [tema, setTema] = useState("");
+  const [opinionesReferencia, setOpinionesReferencia] = useState("");
   const [generando, setGenerando] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +52,7 @@ export default function AnalisisAdminPage() {
   function abrirNuevo() {
     setForm(VACIO);
     setTema("");
+    setOpinionesReferencia("");
     setError(null);
     setEditando("nuevo");
   }
@@ -73,7 +75,7 @@ export default function AnalisisAdminPage() {
       const res = await fetch("/api/admin/articulos/generar-ia", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tema: tema || undefined }),
+        body: JSON.stringify({ tema: tema || undefined, opinionesReferencia: opinionesReferencia || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Error generando el borrador");
@@ -220,6 +222,21 @@ export default function AnalisisAdminPage() {
             <p className="mt-2 text-[11px] text-violet-500">
               Usa siempre los números reales del tablero de hoy — no inventa cifras. Igual
               revisalo antes de publicar.
+            </p>
+
+            <label className="mb-1 mt-3 block text-xs font-medium text-violet-700">
+              Opiniones o análisis de otros comentaristas (opcional)
+            </label>
+            <textarea
+              value={opinionesReferencia}
+              onChange={(e) => setOpinionesReferencia(e.target.value)}
+              rows={4}
+              placeholder="Pegá acá párrafos u opiniones que hayas leído en otros lados sobre el mercado — la IA los usa de referencia para el ángulo/tendencia, pero nunca los copia textual ni los atribuye a nadie puntual."
+              className="w-full rounded-lg border border-violet-200 px-3 py-2 text-sm"
+            />
+            <p className="mt-1 text-[11px] text-violet-500">
+              Se usan solo para orientar el enfoque del artículo — el texto final siempre sale
+              parafraseado con los números de tu propio tablero, nunca como cita textual.
             </p>
           </div>
 

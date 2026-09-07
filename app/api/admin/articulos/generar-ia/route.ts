@@ -12,7 +12,7 @@ import { generarBorradorArticulo } from "@/lib/generar-articulo-ia";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const borrador = await generarBorradorArticulo(body.tema);
+    const borrador = await generarBorradorArticulo(body.tema, body.opinionesReferencia);
     return NextResponse.json(borrador);
   } catch (err) {
     console.error("Error generando artículo con IA:", err);

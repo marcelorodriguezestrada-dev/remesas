@@ -20,6 +20,13 @@ sobre el mercado del dólar blue, el USDT y el cambio ARS/BOB. Tu artículo tien
   separados por una línea en blanco.
 - Terminar con una oración que invite a cotizar el monto propio (sin poner un link, eso lo
   agrega la plantilla después).
+- Si te paso opiniones o análisis de otros comentaristas como referencia (más abajo, entre
+  las etiquetas <opiniones_referencia>), usalas SOLO para entender qué tendencia o ángulo
+  está comentando la gente ahora mismo — nunca copies frases textuales de esas opiniones, ni
+  las atribuyas a una persona o medio puntual (no sabés si esa cita es exacta ni tenés
+  permiso para reproducirla). Si las mencionás, hacelo en términos generales tipo "algunos
+  analistas vienen señalando que..." parafraseado con tus propias palabras, nunca entre
+  comillas.
 
 Devolvé ÚNICAMENTE JSON válido, sin texto ni markdown alrededor, con esta forma EXACTA:
 { "titulo": "...", "resumen": "...", "contenido": "..." }
@@ -43,7 +50,10 @@ párrafos completos separados por "\\n\\n".`;
 // "Production Models" (no en "Enterprise" / "Contact Sales").
 const GROQ_MODEL = "openai/gpt-oss-20b";
 
-export async function generarBorradorArticulo(tema?: string): Promise<BorradorArticulo> {
+export async function generarBorradorArticulo(
+  tema?: string,
+  opinionesReferencia?: string
+): Promise<BorradorArticulo> {
   const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     throw new Error("Falta configurar GROQ_API_KEY en las variables de entorno del servidor.");
@@ -61,9 +71,13 @@ Datos actuales (${new Date(tablero.actualizado).toLocaleString("es-AR")}):
 - Margen de conversión aplicado por la casa de cambio: ${(tablero.margenPct * 100).toFixed(1)}%
 `.trim();
 
+  const bloqueOpiniones = opinionesReferencia?.trim()
+    ? `\n\n<opiniones_referencia>\n${opinionesReferencia.trim()}\n</opiniones_referencia>`
+    : "";
+
   const userPrompt = tema
-    ? `${datosReales}\n\nEscribí el artículo enfocado en este tema puntual: ${tema}`
-    : `${datosReales}\n\nEscribí un artículo de análisis general sobre el estado actual del cambio ARS/BOB/USDT con estos datos.`;
+    ? `${datosReales}\n\nEscribí el artículo enfocado en este tema puntual: ${tema}${bloqueOpiniones}`
+    : `${datosReales}\n\nEscribí un artículo de análisis general sobre el estado actual del cambio ARS/BOB/USDT con estos datos.${bloqueOpiniones}`;
 
   const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
